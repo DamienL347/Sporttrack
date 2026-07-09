@@ -1,0 +1,21 @@
+# Dépendances
+/node_modules
+
+# Build Next.js
+/.next
+/out
+
+# Variables d'environnement (contient ta clé API — ne jamais committer)
+.env.local
+.env*.local
+
+# Build / cache TypeScript
+next-env.d.ts
+*.tsbuildinfo
+
+# Données personnelles (santé) — ne pas publier sur GitHub
+/data/
+
+# Logs & divers
+*.log
+.DS_Store
