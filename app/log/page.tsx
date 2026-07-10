@@ -4,9 +4,10 @@ import { supabase } from '@/lib/supabase'
 import { Profile, loadProfile, getZonePerso } from '@/lib/profile'
 import { todayISO } from '@/lib/recovery'
 import { useRequireAuth } from '@/lib/useRequireAuth'
+import { saveMeasurement } from '@/lib/measurements'
 import Link from 'next/link'
 
-type Tab = 'sport' | 'nutrition' | 'sommeil'
+type Tab = 'sport' | 'nutrition' | 'sommeil' | 'poids'
 
 const SPORTS = ['Tennis', 'Padel', 'Course', 'Tournoi Tennis', 'Tournoi Padel']
 const REPAS = ['Petit-déjeuner', 'Déjeuner', 'Dîner', 'Collation']
@@ -63,6 +64,9 @@ export default function LogPage() {
 
   // Sleep state
   const [sleep, setSleep] = useState({ date: today, coucher: '', lever: '', qualite: 7, reveils: '0', fatigue: 5, note: '' })
+
+  // Poids state
+  const [poids, setPoids] = useState({ date: today, poids: '', taille: '', masse: '', note: '' })
 
   const calcSommeil = () => {
     if (!sleep.coucher || !sleep.lever) return null
@@ -173,11 +177,11 @@ export default function LogPage() {
       douleurs: sport.douleurs.join(', '), recup: sport.recup,
       observation: sport.note || null,
     }
-    let { error } = await supabase.from('sessions').upsert(payload, { onConflict: 'date,sport' })
+    let { error } = await supabase.from('sessions').upsert(payload, { onConflict: 'user_id,date,sport' })
     // Fallback si la migration RPE n'a pas encore été lancée
     if (error && /rpe/i.test(error.message)) {
       delete payload.rpe
-      ;({ error } = await supabase.from('sessions').upsert(payload, { onConflict: 'date,sport' }))
+      ;({ error } = await supabase.from('sessions').upsert(payload, { onConflict: 'user_id,date,sport' }))
     }
     finishSave(error)
   }
@@ -191,7 +195,7 @@ export default function LogPage() {
       kcal: Number(nutri.kcal) || null, proteines: Number(nutri.proteines) || null,
       glucides: Number(nutri.glucides) || null, lipides: Number(nutri.lipides) || null,
       qualite: nutri.qualite, note: nutri.note || null
-    }, { onConflict: 'date,repas' })
+    }, { onConflict: 'user_id,date,repas' })
     finishSave(error)
   }
 
@@ -203,8 +207,24 @@ export default function LogPage() {
       heure_lever: sleep.lever || null, duree_heures: calcSommeil(),
       qualite: sleep.qualite, reveils: Number(sleep.reveils) || 0,
       fatigue_matin: sleep.fatigue, note: sleep.note || null
-    }, { onConflict: 'date' })
+    }, { onConflict: 'user_id,date' })
     finishSave(error)
+  }
+
+  const savePoids = async () => {
+    setErrMsg(null)
+    const kg = Number(poids.poids) || null
+    if (!kg) { setErrMsg('Renseigne au moins ton poids.'); return }
+    if (!guard(kg, 20, 400, 'Poids')) return
+    setSaving(true)
+    const { error } = await saveMeasurement({
+      date: poids.date,
+      poids_kg: kg,
+      tour_taille_cm: Number(poids.taille) || null,
+      masse_grasse_pct: Number(poids.masse) || null,
+      note: poids.note || null,
+    })
+    finishSave(error ? { message: error } : null)
   }
 
   const finishSave = (error: { message: string } | null) => {
@@ -236,16 +256,16 @@ export default function LogPage() {
 
       {/* Tabs */}
       <div className="glass" style={{ display: 'flex', gap: 4, marginBottom: 20, padding: 4 }}>
-        {(['sport', 'nutrition', 'sommeil'] as Tab[]).map(t => (
+        {(['sport', 'nutrition', 'sommeil', 'poids'] as Tab[]).map(t => (
           <button key={t} className="press" onClick={() => setTab(t)} style={{
-            flex: 1, padding: '10px 0', borderRadius: 12, border: 'none',
+            flex: 1, padding: '10px 2px', borderRadius: 12, border: 'none',
             background: tab === t ? 'linear-gradient(135deg, var(--accent), var(--cyan))' : 'transparent',
             color: tab === t ? '#05060c' : 'var(--muted)',
-            fontWeight: 800, fontSize: 13, cursor: 'pointer',
+            fontWeight: 800, fontSize: 12, cursor: 'pointer',
             textTransform: 'capitalize',
             boxShadow: tab === t ? '0 0 16px rgba(0,245,196,0.35)' : 'none',
             transition: 'all 0.25s'
-          }}>{t === 'sport' ? '🏃' : t === 'nutrition' ? '🥗' : '😴'} {t}</button>
+          }}>{t === 'sport' ? '🏃' : t === 'nutrition' ? '🥗' : t === 'sommeil' ? '😴' : '⚖️'} {t}</button>
         ))}
       </div>
 
@@ -368,6 +388,23 @@ export default function LogPage() {
         </div>
       )}
 
+      {/* POIDS */}
+      {tab === 'poids' && (
+        <div style={card}>
+          <div style={sectionTitle}>Pesée</div>
+          <div style={s}><label style={label}>Date</label><input type="date" value={poids.date} onChange={e => setPoids(p => ({ ...p, date: e.target.value }))} /></div>
+          <div style={s}><label style={label}>Poids (kg)</label><input type="number" step="0.1" placeholder="75.4" value={poids.poids} onChange={e => setPoids(p => ({ ...p, poids: e.target.value }))} /></div>
+          <div style={row2}>
+            <div style={s}><label style={label}>Tour de taille (cm)</label><input type="number" step="0.1" placeholder="82" value={poids.taille} onChange={e => setPoids(p => ({ ...p, taille: e.target.value }))} /></div>
+            <div style={s}><label style={label}>Masse grasse (%)</label><input type="number" step="0.1" placeholder="16" value={poids.masse} onChange={e => setPoids(p => ({ ...p, masse: e.target.value }))} /></div>
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14, lineHeight: 1.5 }}>
+            💡 Pèse-toi le matin à jeun, dans les mêmes conditions. Tour de taille et masse grasse sont optionnels (seulement si ta balance les donne).
+          </div>
+          <div style={s}><label style={label}>Note</label><textarea value={poids.note} onChange={e => setPoids(p => ({ ...p, note: e.target.value }))} placeholder="Contexte (après tournoi, gonflé, etc.)" style={{ resize: 'none', height: 50 }} /></div>
+        </div>
+      )}
+
       {/* Error banner */}
       {errMsg && (
         <div style={{ background: 'rgba(255,77,109,0.12)', border: '1px solid var(--danger)', color: 'var(--danger)', borderRadius: 10, padding: '10px 12px', fontSize: 13, marginBottom: 12, wordBreak: 'break-word' }}>
@@ -377,7 +414,7 @@ export default function LogPage() {
 
       {/* Save button */}
       <button
-        onClick={tab === 'sport' ? saveSport : tab === 'nutrition' ? saveNutri : saveSleep}
+        onClick={tab === 'sport' ? saveSport : tab === 'nutrition' ? saveNutri : tab === 'sommeil' ? saveSleep : savePoids}
         disabled={saving}
         style={{ width: '100%', padding: 16, background: saved ? '#27ae60' : 'var(--accent)', color: '#05060c', fontSize: 16, fontWeight: 700, border: 'none', borderRadius: 14, cursor: 'pointer', opacity: saving ? 0.7 : 1, transition: 'all 0.2s' }}
       >

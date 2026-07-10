@@ -88,7 +88,10 @@ export default function ProfilPage() {
 
       <div style={card}>
         <div style={sectionTitle}>Objectifs & contexte</div>
-        <div style={field}><label style={label}>Objectif principal</label><input value={p.objectif || ''} onChange={(e) => set('objectif', e.target.value)} placeholder="Performance padel / Perte de poids / Forme…" /></div>
+        <div style={row2}>
+          <div style={field}><label style={label}>Objectif principal</label><input value={p.objectif || ''} onChange={(e) => set('objectif', e.target.value)} placeholder="Perf padel / Perte de poids…" /></div>
+          <div style={field}><label style={label}>Poids objectif (kg)</label><input type="number" value={p.poids_objectif ?? ''} onChange={(e) => set('poids_objectif', num(e.target.value))} placeholder="72" /></div>
+        </div>
         <div style={field}><label style={label}>Calendrier / tournois à venir</label><textarea value={p.calendrier || ''} onChange={(e) => set('calendrier', e.target.value)} placeholder="Tournoi padel le 20/07, championnat tennis en septembre…" style={{ resize: 'none', height: 60 }} /></div>
         <div style={field}><label style={label}>Blessures / contraintes</label><textarea value={p.blessures || ''} onChange={(e) => set('blessures', e.target.value)} placeholder="Épaule fragile, genou droit sensible…" style={{ resize: 'none', height: 50 }} /></div>
         <div style={field}><label style={label}>Préférences / restrictions alimentaires</label><textarea value={p.preferences_alim || ''} onChange={(e) => set('preferences_alim', e.target.value)} placeholder="Peu de lactose, pas de porc, végétarien le midi…" style={{ resize: 'none', height: 50 }} /></div>

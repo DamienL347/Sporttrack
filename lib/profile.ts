@@ -13,6 +13,7 @@ export type Profile = {
   taille_cm: number | null
   fc_max: number | null
   fc_repos: number | null
+  poids_objectif: number | null
   objectif: string | null
   calendrier: string | null
   blessures: string | null
@@ -23,7 +24,7 @@ export type Profile = {
 export function emptyProfile(): Profile {
   return {
     nom: null, sexe: null, age: null, poids_kg: null, taille_cm: null,
-    fc_max: null, fc_repos: null, objectif: null, calendrier: null,
+    fc_max: null, fc_repos: null, poids_objectif: null, objectif: null, calendrier: null,
     blessures: null, preferences_alim: null, notes_coach: null,
   }
 }

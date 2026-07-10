@@ -27,8 +27,17 @@ alter table nutrition alter column user_id set default auth.uid();
 alter table sleep     alter column user_id set default auth.uid();
 alter table profile   alter column user_id set default auth.uid();
 
--- Profil : une ligne par utilisateur
-create unique index if not exists profile_user_id_key on profile(user_id);
+-- Profil : clé = user_id (une ligne par utilisateur).
+-- Répare aussi les anciennes installs où profile.id avait un défaut fixe (=1),
+-- qui provoquait "duplicate key value violates unique constraint profile_pkey".
+delete from profile where user_id is null;
+alter table profile drop column if exists id cascade;
+drop index if exists profile_user_id_key;
+do $$ begin
+  if not exists (select 1 from pg_constraint where conrelid = 'profile'::regclass and contype = 'p') then
+    alter table profile add primary key (user_id);
+  end if;
+end $$;
 
 -- 2) RLS : chacun ne voit et ne modifie que SES lignes
 alter table sessions  enable row level security;

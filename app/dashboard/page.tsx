@@ -3,6 +3,9 @@ import { useEffect, useState } from 'react'
 import { supabase, Session, Nutrition, Sleep, getZoneColor } from '@/lib/supabase'
 import { useCountUp } from '@/lib/useCountUp'
 import { useRequireAuth } from '@/lib/useRequireAuth'
+import { Measurement, loadMeasurements, weightTrend, daysSinceWeighIn } from '@/lib/measurements'
+import { Profile, loadProfile } from '@/lib/profile'
+import { todayISO } from '@/lib/recovery'
 import RecoveryPanel from '@/app/components/RecoveryPanel'
 import Link from 'next/link'
 
@@ -21,14 +24,44 @@ function Kpi({ title, value, decimals = 0, suffix = '', color, delay }: { title:
   )
 }
 
+function WeightChart({ measures, goal }: { measures: Measurement[]; goal: number | null }) {
+  const pts = measures.filter(m => m.poids_kg != null).map(m => ({ d: m.date, w: m.poids_kg as number }))
+  if (pts.length < 2) return (
+    <div className="glass animate-in" style={{ padding: 16, color: 'var(--muted)', fontSize: 13, textAlign: 'center', animationDelay: '0.2s' }}>Ajoute au moins 2 pesées pour voir la courbe d'évolution.</div>
+  )
+  const W = 320, H = 120, pad = 10
+  const ws = pts.map(p => p.w).concat(goal != null ? [goal] : [])
+  const min = Math.min(...ws), max = Math.max(...ws), range = max - min || 1
+  const x = (i: number) => pad + (i / (pts.length - 1)) * (W - 2 * pad)
+  const y = (w: number) => pad + (1 - (w - min) / range) * (H - 2 * pad)
+  const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(p.w).toFixed(1)}`).join(' ')
+  return (
+    <div className="glass animate-in" style={{ padding: 16, animationDelay: '0.2s' }}>
+      <div style={{ ...label, marginBottom: 12 }}>Évolution du poids</div>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H}>
+        {goal != null && <line x1={pad} y1={y(goal)} x2={W - pad} y2={y(goal)} stroke="var(--cyan)" strokeDasharray="4 4" strokeWidth={1.5} opacity={0.8} />}
+        <path d={path} fill="none" stroke="var(--accent)" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" style={{ filter: 'drop-shadow(0 0 4px rgba(0,245,196,0.5))' }} />
+        {pts.map((p, i) => <circle key={i} cx={x(i)} cy={y(p.w)} r={2.6} fill="var(--accent)" />)}
+      </svg>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+        <span style={{ fontSize: 10, color: 'var(--muted)' }}>{new Date(pts[0].d).toLocaleDateString('fr-FR')}</span>
+        {goal != null && <span style={{ fontSize: 10, color: 'var(--cyan)' }}>— — objectif {goal} kg</span>}
+        <span style={{ fontSize: 10, color: 'var(--muted)' }}>{new Date(pts[pts.length - 1].d).toLocaleDateString('fr-FR')}</span>
+      </div>
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const authed = useRequireAuth()
   const [sessions, setSessions] = useState<Session[]>([])
   const [nutrition, setNutrition] = useState<Nutrition[]>([])
   const [sleep, setSleep] = useState<Sleep[]>([])
+  const [measurements, setMeasurements] = useState<Measurement[]>([])
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'recup' | 'sport' | 'nutrition' | 'sommeil'>('recup')
+  const [activeTab, setActiveTab] = useState<'recup' | 'sport' | 'nutrition' | 'sommeil' | 'poids'>('recup')
 
   useEffect(() => {
     const load = async () => {
@@ -43,6 +76,8 @@ export default function Dashboard() {
         setSessions(sRes.data || [])
         setNutrition(nRes.data || [])
         setSleep(slRes.data || [])
+        setMeasurements(await loadMeasurements())
+        setProfile(await loadProfile())
       } catch (e: any) {
         setLoadError(e?.message || 'Impossible de charger les données (réseau ?).')
       } finally {
@@ -56,6 +91,10 @@ export default function Dashboard() {
   const avgFc = sessions.filter(s => s.fc_moyenne).reduce((a, s, _, arr) => a + (s.fc_moyenne || 0) / arr.length, 0)
   const avgSleep = sleep.filter(s => s.duree_heures).reduce((a, s, _, arr) => a + (s.duree_heures || 0) / arr.length, 0)
   const badNights = sleep.filter(s => (s.duree_heures || 0) < 7).length
+
+  const wTrend = weightTrend(measurements, profile?.poids_objectif ?? null)
+  const daysWeigh = daysSinceWeighIn(measurements, todayISO())
+  const weighDue = daysWeigh === null || daysWeigh >= 3
 
   const card: React.CSSProperties = { padding: 16 }
 
@@ -90,6 +129,18 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Rappel pesée */}
+      {weighDue && (
+        <Link href="/log" className="glass press animate-in" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', marginBottom: 14, textDecoration: 'none', border: '1px solid rgba(0,245,196,0.35)' }}>
+          <span style={{ fontSize: 22 }}>⚖️</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--accent)' }}>C'est l'heure de te peser</div>
+            <div style={{ fontSize: 12, color: 'var(--muted)' }}>{daysWeigh === null ? 'Aucune pesée enregistrée' : `Dernière pesée il y a ${daysWeigh} j`} · onglet Poids</div>
+          </div>
+          <span style={{ color: 'var(--muted)', fontSize: 20 }}>›</span>
+        </Link>
+      )}
+
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>
         <Kpi title="Séances" value={sessions.length} color="var(--accent)" delay={0.04} />
@@ -100,7 +151,7 @@ export default function Dashboard() {
 
       {/* Tabs */}
       <div className="glass animate-in" style={{ display: 'flex', gap: 4, marginBottom: 16, padding: 4, animationDelay: '0.22s' }}>
-        {(['recup', 'sport', 'nutrition', 'sommeil'] as const).map(t => (
+        {(['recup', 'sport', 'nutrition', 'sommeil', 'poids'] as const).map(t => (
           <button key={t} className="press" onClick={() => setActiveTab(t)} style={{
             flex: 1, padding: '9px 0', borderRadius: 12, border: 'none',
             background: activeTab === t ? 'linear-gradient(135deg, var(--accent), var(--cyan))' : 'transparent',
@@ -194,6 +245,37 @@ export default function Dashboard() {
               {s.note && <div style={{ marginTop: 8, fontSize: 12, color: 'var(--muted)', borderTop: '1px solid var(--card-border)', paddingTop: 8 }}>{s.note}</div>}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Poids */}
+      {activeTab === 'poids' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {wTrend.count === 0 ? (
+            <p style={{ color: 'var(--muted)', textAlign: 'center', padding: 40 }}>Aucune pesée. Va dans <Link href="/log" style={{ color: 'var(--accent)' }}>Logger → Poids ⚖️</Link></p>
+          ) : (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div className="glass animate-in" style={{ padding: 16, textAlign: 'center' }}>
+                  <div style={label}>Poids actuel</div>
+                  <div className="stat-num" style={{ fontSize: 27, fontWeight: 900, color: 'var(--accent)', marginTop: 5, letterSpacing: '-1px' }}>{wTrend.latest}<span style={{ fontSize: 14 }}> kg</span></div>
+                </div>
+                <div className="glass animate-in" style={{ padding: 16, textAlign: 'center', animationDelay: '0.05s' }}>
+                  <div style={label}>Objectif</div>
+                  <div className="stat-num" style={{ fontSize: 27, fontWeight: 900, color: 'var(--cyan)', marginTop: 5, letterSpacing: '-1px' }}>{profile?.poids_objectif != null ? <>{profile.poids_objectif}<span style={{ fontSize: 14 }}> kg</span></> : '—'}</div>
+                </div>
+                <div className="glass animate-in" style={{ padding: 16, textAlign: 'center', animationDelay: '0.1s' }}>
+                  <div style={label}>Depuis le début</div>
+                  <div className="stat-num" style={{ fontSize: 22, fontWeight: 800, color: (wTrend.deltaTotal ?? 0) <= 0 ? 'var(--accent)' : 'var(--warn)', marginTop: 5 }}>{wTrend.deltaTotal != null ? `${wTrend.deltaTotal > 0 ? '+' : ''}${wTrend.deltaTotal} kg` : '—'}</div>
+                </div>
+                <div className="glass animate-in" style={{ padding: 16, textAlign: 'center', animationDelay: '0.15s' }}>
+                  <div style={label}>Reste à faire</div>
+                  <div className="stat-num" style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', marginTop: 5 }}>{wTrend.toGoal != null ? `${Math.abs(wTrend.toGoal).toFixed(1)} kg` : '—'}</div>
+                </div>
+              </div>
+              <WeightChart measures={measurements} goal={profile?.poids_objectif ?? null} />
+            </>
+          )}
         </div>
       )}
     </main>

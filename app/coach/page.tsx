@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase, Session, Nutrition, Sleep } from '@/lib/supabase'
 import { buildCoachContext, computeRecovery, todayISO } from '@/lib/recovery'
 import { Profile, loadProfile } from '@/lib/profile'
+import { Measurement, loadMeasurements } from '@/lib/measurements'
 import { useRequireAuth } from '@/lib/useRequireAuth'
 import Link from 'next/link'
 
@@ -21,6 +22,7 @@ export default function CoachPage() {
   const [nutrition, setNutrition] = useState<Nutrition[]>([])
   const [sleep, setSleep] = useState<Sleep[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [measurements, setMeasurements] = useState<Measurement[]>([])
   const [dataReady, setDataReady] = useState(false)
   const [messages, setMessages] = useState<Msg[]>([])
   const [input, setInput] = useState('')
@@ -39,6 +41,7 @@ export default function CoachPage() {
         setNutrition(nRes.data || [])
         setSleep(slRes.data || [])
         setProfile(await loadProfile())
+        setMeasurements(await loadMeasurements())
       } catch {
         // le coach reste utilisable même sans données ; contexte allégé
       } finally {
@@ -67,7 +70,7 @@ export default function CoachPage() {
     setStreaming(true)
 
     try {
-      const context = buildCoachContext(sessions, nutrition, sleep, todayISO(), profile)
+      const context = buildCoachContext(sessions, nutrition, sleep, todayISO(), profile, measurements)
       const res = await fetch('/api/coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

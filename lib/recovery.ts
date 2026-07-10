@@ -7,6 +7,7 @@
  */
 import { Session, Sleep, Nutrition } from './supabase'
 import { Profile, nutritionTargets, hrMax, zoneBounds } from './profile'
+import { Measurement, weightTrend } from './measurements'
 
 const DAY = 86400000
 const SLEEP_TARGET = 8 // heures cible par nuit
@@ -438,7 +439,8 @@ export function buildCoachContext(
   nutrition: Nutrition[],
   sleep: Sleep[],
   today: string,
-  profile?: Profile | null
+  profile?: Profile | null,
+  measurements?: Measurement[]
 ): string {
   const recovery = computeRecovery(sessions, sleep, today)
   const acwr = computeACWR(sessions, today)
@@ -460,6 +462,7 @@ export function buildCoachContext(
   const todayLoadKcal = [...sessions].filter((s) => s.date === today).reduce((a, s) => a + (s.kcal_totales || 0), 0)
   const targets = nutritionTargets(profile ?? null, todayLoadKcal)
   const nut7 = nutritionAverages(nutrition, today, 7)
+  const wt = weightTrend(measurements ?? [], profile?.poids_objectif ?? null)
 
   // Alertes précalculées
   const alerts: string[] = []
@@ -539,6 +542,10 @@ SOMMEIL :
 NUTRITION (moyenne ${nut7.daysLogged} j) :
 - Apport moyen : ${nut7.kcal ?? 'n/a'} kcal/j, ${nut7.prot ?? 'n/a'} g protéines/j
 - Cibles : ${targets.kcal ?? 'n/a'} kcal/j, ${targets.proteines ?? 'n/a'} g protéines/j${targets.kcal == null ? ' (profil incomplet)' : ''}
+
+POIDS / CORPS :
+${wt.count === 0 ? '- Aucune pesée enregistrée' : `- Poids actuel : ${wt.latest} kg${wt.previous != null ? ` (il y a ~14j : ${wt.previous} kg → ${wt.latest! - wt.previous >= 0 ? '+' : ''}${(wt.latest! - wt.previous).toFixed(1)} kg)` : ''}
+- Objectif : ${profile?.poids_objectif ?? 'non défini'} kg${wt.toGoal != null ? ` (reste ${Math.abs(wt.toGoal).toFixed(1)} kg)` : ''} · évolution totale : ${wt.deltaTotal != null ? (wt.deltaTotal > 0 ? '+' : '') + wt.deltaTotal + ' kg' : 'n/a'}`}
 
 CADENCE :
 - Jours depuis dernière séance : ${cadence.daysSinceLast ?? 'n/a'} · jours consécutifs : ${cadence.consecutiveDays}
