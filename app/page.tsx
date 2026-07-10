@@ -4,6 +4,7 @@ const tiles = [
   { href: '/log', icon: '➕', title: 'Logger', sub: 'Séance · repas · sommeil', primary: true },
   { href: '/dashboard', icon: '📈', title: 'Dashboard', sub: 'Récupération & tendances' },
   { href: '/coach', icon: '🤖', title: 'Coach IA', sub: 'Conseils personnalisés' },
+  { href: '/nutrition', icon: '🥗', title: 'Coach Nutrition', sub: 'Repas depuis ton frigo' },
 ]
 
 export default function Home() {

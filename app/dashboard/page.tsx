@@ -124,7 +124,8 @@ export default function Dashboard() {
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <Link href="/profil" className="glass press" style={{ color: 'var(--muted)', borderRadius: 12, padding: '9px 12px', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>⚙️</Link>
-          <Link href="/coach" className="glass press" style={{ color: 'var(--accent)', borderRadius: 12, padding: '9px 14px', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>🤖 Coach</Link>
+          <Link href="/nutrition" className="glass press" style={{ color: 'var(--accent)', borderRadius: 12, padding: '9px 12px', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>🥗</Link>
+          <Link href="/coach" className="glass press" style={{ color: 'var(--accent)', borderRadius: 12, padding: '9px 12px', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>🤖</Link>
           <Link href="/log" className="press glow-accent" style={{ background: 'linear-gradient(135deg, var(--accent), var(--cyan))', color: '#04120e', borderRadius: 12, padding: '9px 16px', textDecoration: 'none', fontWeight: 800, fontSize: 13 }}>+ Log</Link>
         </div>
       </div>
