@@ -5,6 +5,7 @@ import { useCountUp } from '@/lib/useCountUp'
 import { useRequireAuth } from '@/lib/useRequireAuth'
 import { Measurement, loadMeasurements, weightTrend, daysSinceWeighIn } from '@/lib/measurements'
 import { Profile, loadProfile } from '@/lib/profile'
+import { Photo, loadPhotos, daysSincePhoto } from '@/lib/photos'
 import { todayISO } from '@/lib/recovery'
 import RecoveryPanel from '@/app/components/RecoveryPanel'
 import Link from 'next/link'
@@ -58,6 +59,7 @@ export default function Dashboard() {
   const [nutrition, setNutrition] = useState<Nutrition[]>([])
   const [sleep, setSleep] = useState<Sleep[]>([])
   const [measurements, setMeasurements] = useState<Measurement[]>([])
+  const [photos, setPhotos] = useState<Photo[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -77,6 +79,7 @@ export default function Dashboard() {
         setNutrition(nRes.data || [])
         setSleep(slRes.data || [])
         setMeasurements(await loadMeasurements())
+        setPhotos(await loadPhotos())
         setProfile(await loadProfile())
       } catch (e: any) {
         setLoadError(e?.message || 'Impossible de charger les données (réseau ?).')
@@ -95,6 +98,8 @@ export default function Dashboard() {
   const wTrend = weightTrend(measurements, profile?.poids_objectif ?? null)
   const daysWeigh = daysSinceWeighIn(measurements, todayISO())
   const weighDue = daysWeigh === null || daysWeigh >= 3
+  const daysPhoto = daysSincePhoto(photos, todayISO())
+  const photoDue = daysPhoto === null || daysPhoto >= 7
 
   const card: React.CSSProperties = { padding: 16 }
 
@@ -123,6 +128,7 @@ export default function Dashboard() {
           <h1 style={{ fontSize: 22, fontWeight: 900, margin: 0, letterSpacing: '-0.5px' }}>Dashboard</h1>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          <Link href="/photos" className="glass press" style={{ color: 'var(--cyan)', borderRadius: 12, padding: '9px 12px', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>📸</Link>
           <Link href="/profil" className="glass press" style={{ color: 'var(--muted)', borderRadius: 12, padding: '9px 12px', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>⚙️</Link>
           <Link href="/nutrition" className="glass press" style={{ color: 'var(--accent)', borderRadius: 12, padding: '9px 12px', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>🥗</Link>
           <Link href="/coach" className="glass press" style={{ color: 'var(--accent)', borderRadius: 12, padding: '9px 12px', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>🤖</Link>
@@ -137,6 +143,18 @@ export default function Dashboard() {
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--accent)' }}>C'est l'heure de te peser</div>
             <div style={{ fontSize: 12, color: 'var(--muted)' }}>{daysWeigh === null ? 'Aucune pesée enregistrée' : `Dernière pesée il y a ${daysWeigh} j`} · onglet Poids</div>
+          </div>
+          <span style={{ color: 'var(--muted)', fontSize: 20 }}>›</span>
+        </Link>
+      )}
+
+      {/* Rappel photo */}
+      {photoDue && (
+        <Link href="/photos" className="glass press animate-in" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', marginBottom: 14, textDecoration: 'none', border: '1px solid rgba(34,211,238,0.35)' }}>
+          <span style={{ fontSize: 22 }}>📸</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--cyan)' }}>Photo de progression</div>
+            <div style={{ fontSize: 12, color: 'var(--muted)' }}>{daysPhoto === null ? 'Aucune photo encore' : `Dernière il y a ${daysPhoto} j`} · suis ton évolution</div>
           </div>
           <span style={{ color: 'var(--muted)', fontSize: 20 }}>›</span>
         </Link>

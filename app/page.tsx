@@ -5,6 +5,7 @@ const tiles = [
   { href: '/dashboard', icon: '📈', title: 'Dashboard', sub: 'Récupération & tendances' },
   { href: '/coach', icon: '🤖', title: 'Coach IA', sub: 'Conseils personnalisés' },
   { href: '/nutrition', icon: '🥗', title: 'Coach Nutrition', sub: 'Repas depuis ton frigo' },
+  { href: '/photos', icon: '📸', title: 'Progression', sub: 'Photos avant / après' },
 ]
 
 export default function Home() {
