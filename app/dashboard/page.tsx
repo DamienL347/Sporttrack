@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { supabase, Session, Nutrition, Sleep, getZoneColor } from '@/lib/supabase'
 import { useCountUp } from '@/lib/useCountUp'
+import { useRequireAuth } from '@/lib/useRequireAuth'
 import RecoveryPanel from '@/app/components/RecoveryPanel'
 import Link from 'next/link'
 
@@ -21,6 +22,7 @@ function Kpi({ title, value, decimals = 0, suffix = '', color, delay }: { title:
 }
 
 export default function Dashboard() {
+  const authed = useRequireAuth()
   const [sessions, setSessions] = useState<Session[]>([])
   const [nutrition, setNutrition] = useState<Nutrition[]>([])
   const [sleep, setSleep] = useState<Sleep[]>([])
@@ -57,7 +59,7 @@ export default function Dashboard() {
 
   const card: React.CSSProperties = { padding: 16 }
 
-  if (loading) return (
+  if (!authed || loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
       <div className="spinner" />
       <div style={{ color: 'var(--muted)', fontSize: 13 }}>Chargement…</div>

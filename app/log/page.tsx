@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Profile, loadProfile, getZonePerso } from '@/lib/profile'
 import { todayISO } from '@/lib/recovery'
+import { useRequireAuth } from '@/lib/useRequireAuth'
 import Link from 'next/link'
 
 type Tab = 'sport' | 'nutrition' | 'sommeil'
@@ -40,6 +41,7 @@ function Slider({ label, value, onChange }: { label: string; value: number; onCh
 }
 
 export default function LogPage() {
+  const authed = useRequireAuth()
   const [tab, setTab] = useState<Tab>('sport')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -220,6 +222,10 @@ export default function LogPage() {
   const row2: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }
   const card: React.CSSProperties = { background: 'rgba(255,255,255,0.05)', border: '1px solid var(--card-border)', borderRadius: 14, padding: '18px 16px', marginBottom: 14 }
   const sectionTitle: React.CSSProperties = { fontSize: 11, fontWeight: 600, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 14 }
+
+  if (!authed) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>
+  )
 
   return (
     <main style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px 60px' }}>

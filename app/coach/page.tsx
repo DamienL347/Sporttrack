@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase, Session, Nutrition, Sleep } from '@/lib/supabase'
 import { buildCoachContext, computeRecovery, todayISO } from '@/lib/recovery'
 import { Profile, loadProfile } from '@/lib/profile'
+import { useRequireAuth } from '@/lib/useRequireAuth'
 import Link from 'next/link'
 
 type Msg = { role: 'user' | 'assistant'; content: string }
@@ -15,6 +16,7 @@ const SUGGESTIONS = [
 ]
 
 export default function CoachPage() {
+  const authed = useRequireAuth()
   const [sessions, setSessions] = useState<Session[]>([])
   const [nutrition, setNutrition] = useState<Nutrition[]>([])
   const [sleep, setSleep] = useState<Sleep[]>([])
@@ -51,6 +53,10 @@ export default function CoachPage() {
   }, [messages, streaming])
 
   const recovery = dataReady ? computeRecovery(sessions, sleep, todayISO()) : null
+
+  const authGate = !authed ? (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>
+  ) : null
 
   const send = async (text: string) => {
     const q = text.trim()
@@ -105,6 +111,8 @@ export default function CoachPage() {
       setStreaming(false)
     }
   }
+
+  if (authGate) return authGate
 
   return (
     <main

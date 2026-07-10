@@ -30,7 +30,8 @@ export function emptyProfile(): Profile {
 
 export async function loadProfile(): Promise<Profile | null> {
   try {
-    const { data, error } = await supabase.from('profile').select('*').eq('id', 1).maybeSingle()
+    // RLS filtre déjà par utilisateur ; on récupère la ligne du compte connecté.
+    const { data, error } = await supabase.from('profile').select('*').maybeSingle()
     if (error) return null
     return data as Profile | null
   } catch {
@@ -39,7 +40,12 @@ export async function loadProfile(): Promise<Profile | null> {
 }
 
 export async function saveProfile(p: Profile): Promise<{ error: string | null }> {
-  const { error } = await supabase.from('profile').upsert({ ...p, id: 1, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+  const { data: auth } = await supabase.auth.getUser()
+  if (!auth.user) return { error: 'Non connecté.' }
+  const { id, ...rest } = p
+  const { error } = await supabase
+    .from('profile')
+    .upsert({ ...rest, user_id: auth.user.id, updated_at: new Date().toISOString() }, { onConflict: 'user_id' })
   return { error: error ? error.message : null }
 }
 

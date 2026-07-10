@@ -1,7 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Profile, emptyProfile, loadProfile, saveProfile, zoneBounds, hrMax, nutritionTargets } from '@/lib/profile'
+import { useRequireAuth, signOut } from '@/lib/useRequireAuth'
 
 const card: React.CSSProperties = { background: 'rgba(255,255,255,0.05)', border: '1px solid var(--card-border)', borderRadius: 14, padding: '18px 16px', marginBottom: 14 }
 const sectionTitle: React.CSSProperties = { fontSize: 11, fontWeight: 600, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 14 }
@@ -10,6 +12,8 @@ const field: React.CSSProperties = { marginBottom: 14 }
 const row2: React.CSSProperties = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }
 
 export default function ProfilPage() {
+  const authed = useRequireAuth()
+  const router = useRouter()
   const [p, setP] = useState<Profile>(emptyProfile())
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -38,15 +42,18 @@ export default function ProfilPage() {
   const zb = zoneBounds(p)
   const targets = nutritionTargets(p)
 
-  if (loading) return (
-    <div style={{ minHeight: '100vh', background: '#05060c', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>Chargement…</div>
+  if (!authed || loading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>
   )
 
   return (
     <main style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px 60px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-        <Link href="/" style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: 20 }}>←</Link>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent)', margin: 0 }}>Mon profil</h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Link href="/" style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: 20 }}>←</Link>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent)', margin: 0 }}>Mon profil</h1>
+        </div>
+        <button className="press" onClick={async () => { await signOut(); router.replace('/login') }} style={{ background: 'transparent', border: '1px solid var(--card-border)', color: 'var(--muted)', borderRadius: 10, padding: '7px 12px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Se déconnecter</button>
       </div>
 
       <div style={card}>
