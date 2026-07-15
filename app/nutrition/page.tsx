@@ -17,6 +17,18 @@ const SUGGESTIONS = [
   'Un dîner léger qui rentre dans mes calories',
 ]
 
+// Nombre de messages ré-envoyés à l'API pour donner du contexte au modèle
+// (l'historique complet reste affiché et stocké, seul l'envoi est borné).
+const RECENT_LIMIT = 20
+
+async function saveMessage(role: 'user' | 'assistant', content: string, image?: Img) {
+  await supabase.from('coach_messages').insert({
+    coach_type: 'nutrition', role, content,
+    image_data: image?.data ?? null,
+    image_media_type: image?.media_type ?? null,
+  })
+}
+
 export default function NutritionPage() {
   const authed = useRequireAuth()
   const [sessions, setSessions] = useState<Session[]>([])
@@ -26,6 +38,7 @@ export default function NutritionPage() {
   const [measurements, setMeasurements] = useState<Measurement[]>([])
   const [dataReady, setDataReady] = useState(false)
   const [messages, setMessages] = useState<Msg[]>([])
+  const [historyReady, setHistoryReady] = useState(false)
   const [input, setInput] = useState('')
   const [img, setImg] = useState<Img | null>(null)
   const [streaming, setStreaming] = useState(false)
@@ -52,6 +65,34 @@ export default function NutritionPage() {
     }
     load()
   }, [])
+
+  useEffect(() => {
+    const loadHistory = async () => {
+      const { data } = await supabase
+        .from('coach_messages')
+        .select('role, content, image_data, image_media_type')
+        .eq('coach_type', 'nutrition')
+        .order('created_at', { ascending: false })
+        .limit(200)
+      if (data) {
+        setMessages([...data].reverse().map((m) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+          image: m.image_data
+            ? { preview: `data:${m.image_media_type};base64,${m.image_data}`, media_type: m.image_media_type, data: m.image_data }
+            : undefined,
+        })))
+      }
+      setHistoryReady(true)
+    }
+    loadHistory()
+  }, [])
+
+  const resetConversation = async () => {
+    if (!confirm('Effacer toute la conversation avec le coach nutrition ?')) return
+    await supabase.from('coach_messages').delete().eq('coach_type', 'nutrition')
+    setMessages([])
+  }
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
@@ -86,10 +127,11 @@ export default function NutritionPage() {
     const history = [...messages, userMsg]
     setMessages([...history, { role: 'assistant', content: '' }])
     setStreaming(true)
+    saveMessage('user', q, attached || undefined)
 
     try {
       const context = buildCoachContext(sessions, nutrition, sleep, todayISO(), profile, measurements)
-      const payloadMsgs = history.map((m) => ({
+      const payloadMsgs = history.slice(-RECENT_LIMIT).map((m) => ({
         role: m.role,
         content: m.content,
         image: m.image ? { media_type: m.image.media_type, data: m.image.data } : undefined,
@@ -115,6 +157,7 @@ export default function NutritionPage() {
         acc += decoder.decode(value, { stream: true })
         setMessages((m) => { const c = [...m]; c[c.length - 1] = { role: 'assistant', content: acc }; return c })
       }
+      if (acc.trim()) saveMessage('assistant', acc)
     } catch (e: any) {
       setMessages((m) => { const c = [...m]; c[c.length - 1] = { role: 'assistant', content: `⚠️ ${e?.message || 'Erreur réseau.'}` }; return c })
     } finally {
@@ -129,15 +172,20 @@ export default function NutritionPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
         <Link href="/" style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: 20 }}>←</Link>
-        <div>
+        <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: 'var(--accent)', margin: 0 }}>🥗 Coach Nutrition</h1>
           <div style={{ fontSize: 11, color: 'var(--muted)' }}>Photo du frigo ou liste d’aliments → repas sur mesure</div>
         </div>
+        {messages.length > 0 && (
+          <button onClick={resetConversation} title="Nouvelle conversation" style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, cursor: 'pointer', padding: 6 }}>
+            🗑️
+          </button>
+        )}
       </div>
 
       {/* Messages */}
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, paddingBottom: 8 }}>
-        {messages.length === 0 && (
+        {historyReady && messages.length === 0 && (
           <div style={{ marginTop: 8 }}>
             <div className="glass" style={{ padding: 16, color: 'var(--text)', fontSize: 14, lineHeight: 1.5 }}>
               Dis-moi ce que tu as (ou prends ton frigo en photo 📷) et je te propose des repas taillés pour tes objectifs.

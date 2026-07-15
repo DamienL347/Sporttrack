@@ -16,6 +16,14 @@ const SUGGESTIONS = [
   'Comment mieux dormir avant un tournoi ?',
 ]
 
+// Nombre de messages ré-envoyés à l'API pour donner du contexte au modèle
+// (l'historique complet reste affiché et stocké, seul l'envoi est borné).
+const RECENT_LIMIT = 30
+
+async function saveMessage(role: 'user' | 'assistant', content: string) {
+  await supabase.from('coach_messages').insert({ coach_type: 'sport', role, content })
+}
+
 export default function CoachPage() {
   const authed = useRequireAuth()
   const [sessions, setSessions] = useState<Session[]>([])
@@ -25,6 +33,7 @@ export default function CoachPage() {
   const [measurements, setMeasurements] = useState<Measurement[]>([])
   const [dataReady, setDataReady] = useState(false)
   const [messages, setMessages] = useState<Msg[]>([])
+  const [historyReady, setHistoryReady] = useState(false)
   const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -52,6 +61,26 @@ export default function CoachPage() {
   }, [])
 
   useEffect(() => {
+    const loadHistory = async () => {
+      const { data } = await supabase
+        .from('coach_messages')
+        .select('role, content')
+        .eq('coach_type', 'sport')
+        .order('created_at', { ascending: false })
+        .limit(200)
+      if (data) setMessages([...data].reverse().map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })))
+      setHistoryReady(true)
+    }
+    loadHistory()
+  }, [])
+
+  const resetConversation = async () => {
+    if (!confirm('Effacer toute la conversation avec le coach ?')) return
+    await supabase.from('coach_messages').delete().eq('coach_type', 'sport')
+    setMessages([])
+  }
+
+  useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, streaming])
 
@@ -68,13 +97,14 @@ export default function CoachPage() {
     const history: Msg[] = [...messages, { role: 'user', content: q }]
     setMessages([...history, { role: 'assistant', content: '' }])
     setStreaming(true)
+    saveMessage('user', q)
 
     try {
       const context = buildCoachContext(sessions, nutrition, sleep, todayISO(), profile, measurements)
       const res = await fetch('/api/coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history, context }),
+        body: JSON.stringify({ messages: history.slice(-RECENT_LIMIT), context }),
       })
 
       if (!res.ok || !res.body) {
@@ -104,6 +134,7 @@ export default function CoachPage() {
           return copy
         })
       }
+      if (acc.trim()) saveMessage('assistant', acc)
     } catch (e: any) {
       setMessages((m) => {
         const copy = [...m]
@@ -133,7 +164,7 @@ export default function CoachPage() {
         <Link href="/dashboard" style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: 20 }}>
           ←
         </Link>
-        <div>
+        <div style={{ flex: 1 }}>
           <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)', margin: 0 }}>🤖 Coach IA</h1>
           {recovery && recovery.score != null && (
             <div style={{ fontSize: 11, color: 'var(--muted)' }}>
@@ -141,11 +172,16 @@ export default function CoachPage() {
             </div>
           )}
         </div>
+        {messages.length > 0 && (
+          <button onClick={resetConversation} title="Nouvelle conversation" style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: 18, cursor: 'pointer', padding: 6 }}>
+            🗑️
+          </button>
+        )}
       </div>
 
       {/* Messages */}
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12, paddingBottom: 8 }}>
-        {messages.length === 0 && (
+        {historyReady && messages.length === 0 && (
           <div style={{ marginTop: 8 }}>
             <div
               style={{

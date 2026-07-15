@@ -62,6 +62,16 @@ export type Sleep = {
   created_at?: string
 }
 
+export type CoachMessage = {
+  id?: number
+  coach_type: 'sport' | 'nutrition'
+  role: 'user' | 'assistant'
+  content: string
+  image_data?: string | null
+  image_media_type?: string | null
+  created_at?: string
+}
+
 export function getZone(fc: number | null): string {
   if (!fc) return '—'
   if (fc < 120) return 'Zone 1 — Récupération'
