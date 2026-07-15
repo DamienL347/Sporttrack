@@ -430,7 +430,7 @@ export default function LogPage() {
             {!nutriImg ? (
               <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, border: '1.5px dashed var(--card-border)', borderRadius: 10, padding: '16px', color: 'var(--muted)', cursor: 'pointer', fontSize: 14 }}>
                 📷 Prendre / choisir une photo
-                <input type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={e => e.target.files?.[0] && handlePhoto(e.target.files[0])} />
+                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => e.target.files?.[0] && handlePhoto(e.target.files[0])} />
               </label>
             ) : (
               <div style={{ position: 'relative' }}>

@@ -183,7 +183,7 @@ export default function NutritionPage() {
         <form onSubmit={(e) => { e.preventDefault(); send(input) }} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <label className="press" style={{ flexShrink: 0, width: 44, height: 44, borderRadius: 12, border: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, cursor: 'pointer' }}>
             📷
-            <input type="file" accept="image/*" capture="environment" style={{ display: 'none' }} disabled={!dataReady || streaming} onChange={(e) => e.target.files?.[0] && handlePhoto(e.target.files[0])} />
+            <input type="file" accept="image/*" style={{ display: 'none' }} disabled={!dataReady || streaming} onChange={(e) => e.target.files?.[0] && handlePhoto(e.target.files[0])} />
           </label>
           <input value={input} onChange={(e) => setInput(e.target.value)} placeholder={dataReady ? 'Cite tes aliments…' : 'Chargement…'} disabled={!dataReady || streaming} style={{ flex: 1, fontSize: 15 }} />
           <button type="submit" disabled={!dataReady || streaming || (!input.trim() && !img)} className="press" style={{ flexShrink: 0, padding: '0 16px', height: 44, background: 'linear-gradient(135deg, var(--accent), var(--cyan))', color: '#05060c', fontWeight: 800, fontSize: 18, border: 'none', borderRadius: 12, cursor: 'pointer', opacity: !dataReady || streaming || (!input.trim() && !img) ? 0.5 : 1 }}>{streaming ? '…' : '↑'}</button>
