@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase, calcDureeMinutes } from '@/lib/supabase'
 import { Profile, loadProfile, getZonePerso } from '@/lib/profile'
 import { todayISO } from '@/lib/recovery'
 import { useRequireAuth } from '@/lib/useRequireAuth'
@@ -9,7 +9,11 @@ import Link from 'next/link'
 
 type Tab = 'sport' | 'nutrition' | 'sommeil' | 'poids'
 
-const SPORTS = ['Tennis', 'Padel', 'Course', 'Tournoi Tennis', 'Tournoi Padel']
+const SPORTS = [
+  'Tennis', 'Padel', 'Course', 'Tournoi Tennis', 'Tournoi Padel',
+  'Vélo', 'Natation', 'Musculation', 'Football', 'Randonnée',
+  'Boxe', 'CrossFit', 'Yoga', 'Autre',
+]
 const REPAS = ['Petit-déjeuner', 'Déjeuner', 'Dîner', 'Collation']
 const DOULEURS = ['Aucune', 'Jambes', 'Bras', 'Dos', 'Épaules', 'Genoux']
 
@@ -54,7 +58,12 @@ export default function LogPage() {
   const today = todayISO()
 
   // Sport state
-  const [sport, setSport] = useState({ date: today, sport: 'Tennis', duree: '', kcal: '', fc: '', fcmax: '', energie: 7, rpe: 6, douleurs: ['Aucune'], recup: 7, note: '' })
+  const [sport, setSport] = useState({
+    date: today, sport: 'Tennis', sportCustom: '', duree: '', kcal: '', fc: '', fcmax: '',
+    energie: 7, rpe: 6, douleurs: ['Aucune'], recup: 7, note: '',
+    sansMontre: false, aiReco: '', aiConfiance: '',
+  })
+  const [aiEstimating, setAiEstimating] = useState(false)
 
   // Nutrition state
   const [nutri, setNutri] = useState({ date: today, repas: 'Déjeuner', description: '', kcal: '', proteines: '', glucides: '', lipides: '', qualite: 7, note: '', commentaire: '', confiance: '' })
@@ -64,6 +73,13 @@ export default function LogPage() {
 
   // Sleep state
   const [sleep, setSleep] = useState({ date: today, coucher: '', lever: '', qualite: 7, reveils: '0', fatigue: 5, note: '' })
+
+  // Siestes state
+  const [naps, setNaps] = useState<{ debut: string; fin: string; qualite: number; note: string }[]>([])
+  const addNap = () => setNaps(n => [...n, { debut: '', fin: '', qualite: 7, note: '' }])
+  const updateNap = (i: number, key: string, val: string | number) =>
+    setNaps(n => n.map((nap, idx) => idx === i ? { ...nap, [key]: val } : nap))
+  const removeNap = (i: number) => setNaps(n => n.filter((_, idx) => idx !== i))
 
   // Poids state
   const [poids, setPoids] = useState({ date: today, poids: '', taille: '', masse: '', note: '' })
@@ -84,6 +100,37 @@ export default function LogPage() {
       if (without.includes(d)) return { ...s, douleurs: without.filter(x => x !== d) || ['Aucune'] }
       return { ...s, douleurs: [...without, d] }
     })
+  }
+
+  const estimateSport = async () => {
+    setErrMsg(null)
+    if (!sport.duree.trim()) { setErrMsg('Renseigne au moins la durée.'); return }
+    setAiEstimating(true)
+    try {
+      const res = await fetch('/api/ai-sport', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sport: sport.sport === 'Autre' ? sport.sportCustom : sport.sport,
+          duree: sport.duree,
+          note: sport.note,
+          date: sport.date,
+        }),
+      })
+      const d = await res.json()
+      if (!res.ok) { setErrMsg(d.error || 'Échec de l’estimation.'); return }
+      setSport(p => ({
+        ...p,
+        kcal: String(d.kcal ?? ''),
+        fc: String(d.fc_moyenne ?? ''),
+        aiReco: d.conseil || '',
+        aiConfiance: d.confiance || '',
+      }))
+    } catch (e: any) {
+      setErrMsg(e?.message || 'Erreur réseau pendant l’estimation.')
+    } finally {
+      setAiEstimating(false)
+    }
   }
 
   // Redimensionne la photo (max 1024px, JPEG q0.8) → réduit payload et coût vision
@@ -162,6 +209,7 @@ export default function LogPage() {
 
   const saveSport = async () => {
     setErrMsg(null)
+    const sportName = sport.sport === 'Autre' ? (sport.sportCustom.trim() || 'Autre') : sport.sport
     const zone = getZonePerso(Number(sport.fc) || null, profile)
     const kcal = Number(sport.kcal) || 0
     const fc = Number(sport.fc) || null
@@ -170,17 +218,23 @@ export default function LogPage() {
     const [h, m] = sport.duree ? sport.duree.split(':').map(Number) : [0, 0]
     const heures = h + (m || 0) / 60
     const payload: Record<string, any> = {
-      date: sport.date, sport: sport.sport, duree: sport.duree || null,
+      date: sport.date, sport: sportName, duree: sport.duree || null,
       kcal_totales: kcal, kcal_heure: heures > 0 ? Math.round(kcal / heures) : null,
       fc_moyenne: fc, fc_max: Number(sport.fcmax) || null,
       zone_cardiaque: zone, energie: sport.energie, rpe: sport.rpe,
       douleurs: sport.douleurs.join(', '), recup: sport.recup,
       observation: sport.note || null,
+      sans_montre: sport.sansMontre, ai_recommendation: sport.aiReco || null,
     }
     let { error } = await supabase.from('sessions').upsert(payload, { onConflict: 'user_id,date,sport' })
-    // Fallback si la migration RPE n'a pas encore été lancée
+    // Fallback si la migration RPE / sans-montre n'a pas encore été lancée
     if (error && /rpe/i.test(error.message)) {
       delete payload.rpe
+      ;({ error } = await supabase.from('sessions').upsert(payload, { onConflict: 'user_id,date,sport' }))
+    }
+    if (error && /(sans_montre|ai_recommendation)/i.test(error.message)) {
+      delete payload.sans_montre
+      delete payload.ai_recommendation
       ;({ error } = await supabase.from('sessions').upsert(payload, { onConflict: 'user_id,date,sport' }))
     }
     finishSave(error)
@@ -208,6 +262,20 @@ export default function LogPage() {
       qualite: sleep.qualite, reveils: Number(sleep.reveils) || 0,
       fatigue_matin: sleep.fatigue, note: sleep.note || null
     }, { onConflict: 'user_id,date' })
+    if (!error) {
+      const rows = naps
+        .filter(n => n.debut && n.fin)
+        .map(n => ({
+          date: sleep.date, heure_debut: n.debut, heure_fin: n.fin,
+          duree_minutes: calcDureeMinutes(n.debut, n.fin),
+          qualite: n.qualite, note: n.note || null,
+        }))
+      if (rows.length) {
+        const { error: napError } = await supabase.from('naps').insert(rows)
+        finishSave(napError)
+        return
+      }
+    }
     finishSave(error)
   }
 
@@ -281,17 +349,47 @@ export default function LogPage() {
                 {SPORTS.map(sp => <Chip key={sp} label={sp} active={sport.sport === sp} onClick={() => setSport(p => ({ ...p, sport: sp }))} />)}
               </div>
             </div>
+            {sport.sport === 'Autre' && (
+              <div style={s}><label style={label}>Précise le sport</label>
+                <input type="text" placeholder="Quel sport ?" value={sport.sportCustom} onChange={e => setSport(p => ({ ...p, sportCustom: e.target.value }))} /></div>
+            )}
             <div style={row2}>
               <div style={s}><label style={label}>Durée</label><input type="text" placeholder="1:30:00" value={sport.duree} onChange={e => setSport(p => ({ ...p, duree: e.target.value }))} /></div>
               <div style={s}><label style={label}>Kcal totales</label><input type="number" placeholder="950" value={sport.kcal} onChange={e => setSport(p => ({ ...p, kcal: e.target.value }))} /></div>
             </div>
-            <div style={row2}>
-              <div style={s}><label style={label}>FC moy (BPM)</label><input type="number" placeholder="130" value={sport.fc} onChange={e => setSport(p => ({ ...p, fc: e.target.value }))} /></div>
-              <div style={s}><label style={label}>FC max (BPM)</label><input type="number" placeholder="165" value={sport.fcmax} onChange={e => setSport(p => ({ ...p, fcmax: e.target.value }))} /></div>
+            <div style={{ ...s, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#05060c', border: '1px solid var(--card-border)', borderRadius: 10, padding: '12px 14px' }}>
+              <label style={{ ...label, margin: 0 }}>⌚ Sans montre — estimation IA</label>
+              <div onClick={() => setSport(p => ({ ...p, sansMontre: !p.sansMontre }))}
+                style={{ width: 44, height: 24, borderRadius: 12, background: sport.sansMontre ? 'var(--accent)' : 'var(--card-border)', position: 'relative', cursor: 'pointer', transition: 'background 0.2s', flexShrink: 0 }}>
+                <div style={{ width: 18, height: 18, borderRadius: 9, background: '#fff', position: 'absolute', top: 3, left: sport.sansMontre ? 23 : 3, transition: 'left 0.2s' }} />
+              </div>
             </div>
-            {sport.fc && <div style={{ background: '#05060c', border: '1px solid var(--card-border)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: 'var(--accent)', marginTop: -4 }}>
-              Zone : {getZonePerso(Number(sport.fc), profile)}{!profile?.fc_max && !profile?.age ? ' (zones génériques — renseigne ton profil)' : ''}
-            </div>}
+            {sport.sansMontre ? (
+              <>
+                <button onClick={estimateSport} disabled={aiEstimating || !sport.duree.trim()} style={{ width: '100%', padding: '13px', background: 'rgba(0,245,196,0.10)', border: '1.5px solid var(--accent)', color: 'var(--accent)', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer', marginBottom: 14, opacity: aiEstimating || !sport.duree.trim() ? 0.6 : 1 }}>
+                  {aiEstimating ? '🤖 Estimation en cours…' : '🤖 Estimer avec l’IA'}
+                </button>
+                {sport.aiReco && (
+                  <div style={{ background: '#05060c', border: '1px solid var(--card-border)', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: 'var(--text)', marginBottom: 14, lineHeight: 1.5 }}>
+                    💬 {sport.aiReco}
+                    {sport.aiConfiance && <span style={{ color: 'var(--muted)', fontSize: 11 }}> · confiance {sport.aiConfiance}</span>}
+                  </div>
+                )}
+                {sport.fc && <div style={{ background: '#05060c', border: '1px solid var(--card-border)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: 'var(--accent)', marginBottom: 14 }}>
+                  FC estimée : {sport.fc} BPM · Zone : {getZonePerso(Number(sport.fc), profile)}
+                </div>}
+              </>
+            ) : (
+              <>
+                <div style={row2}>
+                  <div style={s}><label style={label}>FC moy (BPM)</label><input type="number" placeholder="130" value={sport.fc} onChange={e => setSport(p => ({ ...p, fc: e.target.value }))} /></div>
+                  <div style={s}><label style={label}>FC max (BPM)</label><input type="number" placeholder="165" value={sport.fcmax} onChange={e => setSport(p => ({ ...p, fcmax: e.target.value }))} /></div>
+                </div>
+                {sport.fc && <div style={{ background: '#05060c', border: '1px solid var(--card-border)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: 'var(--accent)', marginTop: -4 }}>
+                  Zone : {getZonePerso(Number(sport.fc), profile)}{!profile?.fc_max && !profile?.age ? ' (zones génériques — renseigne ton profil)' : ''}
+                </div>}
+              </>
+            )}
           </div>
 
           <div style={card}>
@@ -369,23 +467,50 @@ export default function LogPage() {
 
       {/* SOMMEIL */}
       {tab === 'sommeil' && (
-        <div style={card}>
-          <div style={sectionTitle}>Nuit</div>
-          <div style={s}><label style={label}>Date (nuit du)</label><input type="date" value={sleep.date} onChange={e => setSleep(p => ({ ...p, date: e.target.value }))} /></div>
-          <div style={row2}>
-            <div style={s}><label style={label}>Coucher</label><input type="time" value={sleep.coucher} onChange={e => setSleep(p => ({ ...p, coucher: e.target.value }))} /></div>
-            <div style={s}><label style={label}>Lever</label><input type="time" value={sleep.lever} onChange={e => setSleep(p => ({ ...p, lever: e.target.value }))} /></div>
+        <>
+          <div style={card}>
+            <div style={sectionTitle}>Nuit</div>
+            <div style={s}><label style={label}>Date (nuit du)</label><input type="date" value={sleep.date} onChange={e => setSleep(p => ({ ...p, date: e.target.value }))} /></div>
+            <div style={row2}>
+              <div style={s}><label style={label}>Coucher</label><input type="time" value={sleep.coucher} onChange={e => setSleep(p => ({ ...p, coucher: e.target.value }))} /></div>
+              <div style={s}><label style={label}>Lever</label><input type="time" value={sleep.lever} onChange={e => setSleep(p => ({ ...p, lever: e.target.value }))} /></div>
+            </div>
+            {calcSommeil() && <div style={{ background: '#05060c', border: '1px solid var(--card-border)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: (calcSommeil() || 0) >= 7.5 ? 'var(--accent)' : 'var(--danger)', marginBottom: 14 }}>
+              Durée : {calcSommeil()}h {(calcSommeil() || 0) >= 7.5 ? '✅' : '⚠️ Insuffisant'}
+            </div>}
+            <Slider label="Qualité du sommeil" value={sleep.qualite} onChange={v => setSleep(p => ({ ...p, qualite: v }))} />
+            <div style={row2}>
+              <div style={s}><label style={label}>Réveils</label><input type="number" min={0} value={sleep.reveils} onChange={e => setSleep(p => ({ ...p, reveils: e.target.value }))} /></div>
+              <div style={s}><label style={label}>Fatigue matin /10</label><input type="number" min={1} max={10} value={sleep.fatigue} onChange={e => setSleep(p => ({ ...p, fatigue: Number(e.target.value) }))} /></div>
+            </div>
+            <div style={s}><label style={label}>Note</label><textarea value={sleep.note} onChange={e => setSleep(p => ({ ...p, note: e.target.value }))} placeholder="Chaleur, moustiques, stress..." style={{ resize: 'none', height: 60 }} /></div>
           </div>
-          {calcSommeil() && <div style={{ background: '#05060c', border: '1px solid var(--card-border)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: (calcSommeil() || 0) >= 7.5 ? 'var(--accent)' : 'var(--danger)', marginBottom: 14 }}>
-            Durée : {calcSommeil()}h {(calcSommeil() || 0) >= 7.5 ? '✅' : '⚠️ Insuffisant'}
-          </div>}
-          <Slider label="Qualité du sommeil" value={sleep.qualite} onChange={v => setSleep(p => ({ ...p, qualite: v }))} />
-          <div style={row2}>
-            <div style={s}><label style={label}>Réveils</label><input type="number" min={0} value={sleep.reveils} onChange={e => setSleep(p => ({ ...p, reveils: e.target.value }))} /></div>
-            <div style={s}><label style={label}>Fatigue matin /10</label><input type="number" min={1} max={10} value={sleep.fatigue} onChange={e => setSleep(p => ({ ...p, fatigue: Number(e.target.value) }))} /></div>
+
+          <div style={card}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ ...sectionTitle, marginBottom: 0 }}>😴 Siestes</div>
+              <button className="press" onClick={addNap} style={{ background: 'rgba(0,245,196,0.10)', border: '1px solid var(--accent)', color: 'var(--accent)', borderRadius: 8, padding: '5px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>+ Ajouter</button>
+            </div>
+            {naps.length === 0 && <p style={{ color: 'var(--muted)', fontSize: 13, textAlign: 'center', padding: '12px 0' }}>Aucune sieste</p>}
+            {naps.map((nap, i) => (
+              <div key={i} style={{ background: '#05060c', border: '1px solid var(--card-border)', borderRadius: 10, padding: 12, marginBottom: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <span style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}>Sieste {i + 1}</span>
+                  <button onClick={() => removeNap(i)} style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16 }}>✕</button>
+                </div>
+                <div style={row2}>
+                  <div style={s}><label style={label}>Début</label><input type="time" value={nap.debut} onChange={e => updateNap(i, 'debut', e.target.value)} /></div>
+                  <div style={s}><label style={label}>Fin</label><input type="time" value={nap.fin} onChange={e => updateNap(i, 'fin', e.target.value)} /></div>
+                </div>
+                {nap.debut && nap.fin && <div style={{ fontSize: 12, color: 'var(--accent)', marginBottom: 8 }}>Durée : {calcDureeMinutes(nap.debut, nap.fin)} min</div>}
+                <div style={row2}>
+                  <div><label style={label}>Qualité /10</label><input type="number" min={1} max={10} value={nap.qualite} onChange={e => updateNap(i, 'qualite', Number(e.target.value))} /></div>
+                  <div><label style={label}>Note</label><input type="text" placeholder="Réparatrice ?" value={nap.note} onChange={e => updateNap(i, 'note', e.target.value)} /></div>
+                </div>
+              </div>
+            ))}
           </div>
-          <div style={s}><label style={label}>Note</label><textarea value={sleep.note} onChange={e => setSleep(p => ({ ...p, note: e.target.value }))} placeholder="Chaleur, moustiques, stress..." style={{ resize: 'none', height: 60 }} /></div>
-        </div>
+        </>
       )}
 
       {/* POIDS */}

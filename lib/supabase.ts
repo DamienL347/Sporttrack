@@ -27,6 +27,8 @@ export type Session = {
   douleurs: string | null
   recup: number | null
   rpe: number | null
+  sans_montre?: boolean
+  ai_recommendation?: string | null
   created_at?: string
 }
 
@@ -74,4 +76,24 @@ export function getZoneColor(zone: string): string {
   if (zone.includes('Zone 3')) return '#f39c12'
   if (zone.includes('Zone 4')) return '#e74c3c'
   return '#6b7280'
+}
+
+export type Nap = {
+  id?: number
+  date: string
+  heure_debut: string
+  heure_fin: string
+  duree_minutes?: number | null
+  qualite?: number | null
+  note?: string | null
+  created_at?: string
+}
+
+/** Durée en minutes entre deux horaires "HH:MM" (gère le passage minuit). */
+export function calcDureeMinutes(debut: string, fin: string): number {
+  const [dh, dm] = debut.split(':').map(Number)
+  const [fh, fm] = fin.split(':').map(Number)
+  let diff = (fh * 60 + fm) - (dh * 60 + dm)
+  if (diff < 0) diff += 1440
+  return diff
 }
