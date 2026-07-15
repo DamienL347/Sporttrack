@@ -7,7 +7,8 @@ import { Measurement, loadMeasurements } from '@/lib/measurements'
 import { useRequireAuth } from '@/lib/useRequireAuth'
 import Link from 'next/link'
 
-type Msg = { role: 'user' | 'assistant'; content: string }
+type Img = { preview: string; media_type: string; data: string }
+type Msg = { role: 'user' | 'assistant'; content: string; image?: Img }
 
 const SUGGESTIONS = [
   'Comment je récupère en ce moment ?',
@@ -18,10 +19,14 @@ const SUGGESTIONS = [
 
 // Nombre de messages ré-envoyés à l'API pour donner du contexte au modèle
 // (l'historique complet reste affiché et stocké, seul l'envoi est borné).
-const RECENT_LIMIT = 30
+const RECENT_LIMIT = 20
 
-async function saveMessage(role: 'user' | 'assistant', content: string) {
-  await supabase.from('coach_messages').insert({ coach_type: 'sport', role, content })
+async function saveMessage(role: 'user' | 'assistant', content: string, image?: Img) {
+  await supabase.from('coach_messages').insert({
+    coach_type: 'sport', role, content,
+    image_data: image?.data ?? null,
+    image_media_type: image?.media_type ?? null,
+  })
 }
 
 export default function CoachPage() {
@@ -35,6 +40,7 @@ export default function CoachPage() {
   const [messages, setMessages] = useState<Msg[]>([])
   const [historyReady, setHistoryReady] = useState(false)
   const [input, setInput] = useState('')
+  const [img, setImg] = useState<Img | null>(null)
   const [streaming, setStreaming] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -64,15 +70,43 @@ export default function CoachPage() {
     const loadHistory = async () => {
       const { data } = await supabase
         .from('coach_messages')
-        .select('role, content')
+        .select('role, content, image_data, image_media_type')
         .eq('coach_type', 'sport')
         .order('created_at', { ascending: false })
         .limit(200)
-      if (data) setMessages([...data].reverse().map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })))
+      if (data) {
+        setMessages([...data].reverse().map((m) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+          image: m.image_data
+            ? { preview: `data:${m.image_media_type};base64,${m.image_data}`, media_type: m.image_media_type, data: m.image_data }
+            : undefined,
+        })))
+      }
       setHistoryReady(true)
     }
     loadHistory()
   }, [])
+
+  // Redimensionne la photo (max 1024px, JPEG q0.8) → réduit payload et coût vision
+  const handlePhoto = (file: File) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const im = new Image()
+      im.onload = () => {
+        const max = 1024
+        const scale = Math.min(1, max / Math.max(im.width, im.height))
+        const w = Math.round(im.width * scale), h = Math.round(im.height * scale)
+        const canvas = document.createElement('canvas')
+        canvas.width = w; canvas.height = h
+        canvas.getContext('2d')!.drawImage(im, 0, 0, w, h)
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8)
+        setImg({ preview: dataUrl, media_type: 'image/jpeg', data: dataUrl.split(',')[1] })
+      }
+      im.src = reader.result as string
+    }
+    reader.readAsDataURL(file)
+  }
 
   const resetConversation = async () => {
     if (!confirm('Effacer toute la conversation avec le coach ?')) return
@@ -92,19 +126,26 @@ export default function CoachPage() {
 
   const send = async (text: string) => {
     const q = text.trim()
-    if (!q || streaming) return
+    if ((!q && !img) || streaming) return
     setInput('')
-    const history: Msg[] = [...messages, { role: 'user', content: q }]
+    const attached = img
+    setImg(null)
+    const history: Msg[] = [...messages, { role: 'user', content: q, image: attached || undefined }]
     setMessages([...history, { role: 'assistant', content: '' }])
     setStreaming(true)
-    saveMessage('user', q)
+    saveMessage('user', q, attached || undefined)
 
     try {
       const context = buildCoachContext(sessions, nutrition, sleep, todayISO(), profile, measurements)
+      const payloadMsgs = history.slice(-RECENT_LIMIT).map((m) => ({
+        role: m.role,
+        content: m.content,
+        image: m.image ? { media_type: m.image.media_type, data: m.image.data } : undefined,
+      }))
       const res = await fetch('/api/coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history.slice(-RECENT_LIMIT), context }),
+        body: JSON.stringify({ messages: payloadMsgs, context }),
       })
 
       if (!res.ok || !res.body) {
@@ -236,7 +277,7 @@ export default function CoachPage() {
               borderRadius: 16,
               borderBottomRightRadius: m.role === 'user' ? 5 : 16,
               borderBottomLeftRadius: m.role === 'user' ? 16 : 5,
-              padding: '11px 14px',
+              padding: m.image ? 6 : '11px 14px',
               fontSize: 14,
               fontWeight: m.role === 'user' ? 600 : 400,
               lineHeight: 1.55,
@@ -244,44 +285,59 @@ export default function CoachPage() {
               wordBreak: 'break-word',
             }}
           >
-            {m.content || (streaming && i === messages.length - 1 ? '…' : '')}
+            {m.image && <img src={m.image.preview} alt="photo envoyée" style={{ width: '100%', borderRadius: 11, marginBottom: m.content ? 8 : 0, display: 'block' }} />}
+            <div style={{ padding: m.image ? '0 8px 6px' : 0 }}>{m.content || (streaming && i === messages.length - 1 ? '…' : '')}</div>
           </div>
         ))}
       </div>
 
       {/* Input */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          send(input)
-        }}
-        style={{ display: 'flex', gap: 8, paddingTop: 10, borderTop: '1px solid var(--card-border)' }}
-      >
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={dataReady ? 'Pose ta question…' : 'Chargement des données…'}
-          disabled={!dataReady || streaming}
-          style={{ flex: 1, fontSize: 15 }}
-        />
-        <button
-          type="submit"
-          disabled={!dataReady || streaming || !input.trim()}
-          style={{
-            padding: '0 18px',
-            background: 'var(--accent)',
-            color: 'var(--ink)',
-            fontWeight: 700,
-            fontSize: 15,
-            border: 'none',
-            borderRadius: 10,
-            cursor: 'pointer',
-            opacity: !dataReady || streaming || !input.trim() ? 0.5 : 1,
+      <div style={{ paddingTop: 10, borderTop: '1px solid var(--card-border)' }}>
+        {img && (
+          <div style={{ position: 'relative', width: 66, height: 66, marginBottom: 8 }}>
+            <img src={img.preview} alt="photo à envoyer" style={{ width: 66, height: 66, objectFit: 'cover', borderRadius: 10 }} />
+            <button onClick={() => setImg(null)} style={{ position: 'absolute', top: -6, right: -6, background: 'var(--danger)', color: '#fff', border: 'none', borderRadius: 999, width: 20, height: 20, fontSize: 12, cursor: 'pointer', lineHeight: 1 }}>✕</button>
+          </div>
+        )}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            send(input)
           }}
+          style={{ display: 'flex', gap: 8, alignItems: 'center' }}
         >
-          {streaming ? '…' : '↑'}
-        </button>
-      </form>
+          <label className="press" style={{ flexShrink: 0, width: 44, height: 44, borderRadius: 12, border: '1px solid var(--card-border)', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, cursor: 'pointer' }}>
+            📷
+            <input type="file" accept="image/*" style={{ display: 'none' }} disabled={!dataReady || streaming} onChange={(e) => e.target.files?.[0] && handlePhoto(e.target.files[0])} />
+          </label>
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={dataReady ? 'Pose ta question…' : 'Chargement des données…'}
+            disabled={!dataReady || streaming}
+            style={{ flex: 1, fontSize: 15 }}
+          />
+          <button
+            type="submit"
+            disabled={!dataReady || streaming || (!input.trim() && !img)}
+            style={{
+              padding: '0 18px',
+              height: 44,
+              flexShrink: 0,
+              background: 'var(--accent)',
+              color: 'var(--ink)',
+              fontWeight: 700,
+              fontSize: 15,
+              border: 'none',
+              borderRadius: 10,
+              cursor: 'pointer',
+              opacity: !dataReady || streaming || (!input.trim() && !img) ? 0.5 : 1,
+            }}
+          >
+            {streaming ? '…' : '↑'}
+          </button>
+        </form>
+      </div>
     </main>
   )
 }

@@ -27,6 +27,8 @@ Style :
 - Réponses courtes et structurées (puces quand utile). Va droit au but, cite les chiffres pertinents des données.
 - Quand tu recommandes quelque chose, explique brièvement le "pourquoi" (le mécanisme).
 
+Photos : l'athlète peut t'envoyer des images (écran de montre/app, position ou geste technique, terrain, matériel, courbatures visibles...). Décris ce que tu y vois d'utile et intègre-le à ton analyse.
+
 Garde-fous :
 - Tu n'es pas médecin ni diététicien clinique. Pour toute douleur persistante, blessure, trouble alimentaire ou symptôme inquiétant, recommande de consulter un professionnel de santé — ne pose jamais de diagnostic médical.
 - Les valeurs nutritionnelles sont des estimations : reste dans l'ordre de grandeur, ne prétends pas à une précision au gramme.
@@ -43,19 +45,38 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  let body: { messages?: { role: 'user' | 'assistant'; content: string }[]; context?: string }
+  let body: {
+    messages?: { role: 'user' | 'assistant'; content: string; image?: { media_type: string; data: string } }[]
+    context?: string
+  }
   try {
     body = await req.json()
   } catch {
     return new Response(JSON.stringify({ error: 'Requête invalide.' }), { status: 400 })
   }
 
-  const messages = (body.messages || []).filter(
+  const raw = (body.messages || []).filter(
     (m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string'
   )
-  if (messages.length === 0) {
+  if (raw.length === 0) {
     return new Response(JSON.stringify({ error: 'Aucun message.' }), { status: 400 })
   }
+
+  const messages: Anthropic.MessageParam[] = raw.map((m) => {
+    if (m.role === 'user' && m.image?.data) {
+      const mt = m.image.media_type
+      const media_type = (['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(mt) ? mt : 'image/jpeg') as
+        | 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
+      return {
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type, data: m.image.data } },
+          { type: 'text', text: m.content || 'Analyse cette photo.' },
+        ],
+      }
+    }
+    return { role: m.role, content: m.content }
+  })
 
   const system = SYSTEM_BASE + '\n\n=== DONNÉES DE L’ATHLÈTE ===\n' + (body.context || '(aucune donnée)')
 
