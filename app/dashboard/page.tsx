@@ -41,7 +41,7 @@ function WeightChart({ measures, goal }: { measures: Measurement[]; goal: number
       <div style={{ ...label, marginBottom: 12 }}>Évolution du poids</div>
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H}>
         {goal != null && <line x1={pad} y1={y(goal)} x2={W - pad} y2={y(goal)} stroke="var(--cyan)" strokeDasharray="4 4" strokeWidth={1.5} opacity={0.8} />}
-        <path d={path} fill="none" stroke="var(--accent)" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" style={{ filter: 'drop-shadow(0 0 4px rgba(0,245,196,0.5))' }} />
+        <path d={path} fill="none" stroke="var(--accent)" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" style={{ filter: 'drop-shadow(0 0 4px rgba(255,107,61,0.5))' }} />
         {pts.map((p, i) => <circle key={i} cx={x(i)} cy={y(p.w)} r={2.6} fill="var(--accent)" />)}
       </svg>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
@@ -115,30 +115,27 @@ export default function Dashboard() {
       <div style={{ fontSize: 40 }}>📡</div>
       <div style={{ color: 'var(--danger)', fontWeight: 700, fontSize: 16 }}>Impossible de charger les données</div>
       <div style={{ color: 'var(--muted)', fontSize: 13, maxWidth: 340, wordBreak: 'break-word' }}>{loadError}</div>
-      <button className="press" onClick={() => location.reload()} style={{ background: 'var(--accent)', color: '#04120e', border: 'none', borderRadius: 12, padding: '11px 22px', fontWeight: 800, cursor: 'pointer' }}>Réessayer</button>
+      <button className="press" onClick={() => location.reload()} style={{ background: 'var(--accent)', color: 'var(--ink)', border: 'none', borderRadius: 12, padding: '11px 22px', fontWeight: 800, cursor: 'pointer' }}>Réessayer</button>
       <Link href="/" style={{ color: 'var(--muted)', fontSize: 13 }}>← Accueil</Link>
     </main>
   )
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px 60px' }}>
-      <div className="animate-in" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link href="/" style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: 22 }}>←</Link>
-          <h1 style={{ fontSize: 22, fontWeight: 900, margin: 0, letterSpacing: '-0.5px' }}>Dashboard</h1>
+    <main className="page-pad" style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px 60px' }}>
+      <div className="animate-in" style={{ marginBottom: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0 }}>Dashboard</h1>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Link href="/photos" className="glass press" style={{ color: 'var(--cyan)', borderRadius: 12, padding: '9px 12px', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>📸</Link>
+            <Link href="/nutrition" className="glass press" style={{ color: 'var(--accent)', borderRadius: 12, padding: '9px 12px', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>🥗</Link>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Link href="/photos" className="glass press" style={{ color: 'var(--cyan)', borderRadius: 12, padding: '9px 12px', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>📸</Link>
-          <Link href="/profil" className="glass press" style={{ color: 'var(--muted)', borderRadius: 12, padding: '9px 12px', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>⚙️</Link>
-          <Link href="/nutrition" className="glass press" style={{ color: 'var(--accent)', borderRadius: 12, padding: '9px 12px', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>🥗</Link>
-          <Link href="/coach" className="glass press" style={{ color: 'var(--accent)', borderRadius: 12, padding: '9px 12px', textDecoration: 'none', fontWeight: 700, fontSize: 13 }}>🤖</Link>
-          <Link href="/log" className="press glow-accent" style={{ background: 'linear-gradient(135deg, var(--accent), var(--cyan))', color: '#04120e', borderRadius: 12, padding: '9px 16px', textDecoration: 'none', fontWeight: 800, fontSize: 13 }}>+ Log</Link>
-        </div>
+        <div className="service-line" style={{ marginTop: 12 }} />
       </div>
 
       {/* Rappel pesée */}
       {weighDue && (
-        <Link href="/log" className="glass press animate-in" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', marginBottom: 14, textDecoration: 'none', border: '1px solid rgba(0,245,196,0.35)' }}>
+        <Link href="/log" className="glass press animate-in" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', marginBottom: 14, textDecoration: 'none', border: '1px solid rgba(255,107,61,0.35)' }}>
           <span style={{ fontSize: 22 }}>⚖️</span>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--accent)' }}>C'est l'heure de te peser</div>
@@ -150,7 +147,7 @@ export default function Dashboard() {
 
       {/* Rappel photo */}
       {photoDue && (
-        <Link href="/photos" className="glass press animate-in" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', marginBottom: 14, textDecoration: 'none', border: '1px solid rgba(34,211,238,0.35)' }}>
+        <Link href="/photos" className="glass press animate-in" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', marginBottom: 14, textDecoration: 'none', border: '1px solid rgba(111,177,255,0.35)' }}>
           <span style={{ fontSize: 22 }}>📸</span>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--cyan)' }}>Photo de progression</div>
@@ -173,10 +170,10 @@ export default function Dashboard() {
         {(['recup', 'sport', 'nutrition', 'sommeil', 'poids'] as const).map(t => (
           <button key={t} className="press" onClick={() => setActiveTab(t)} style={{
             flex: 1, padding: '9px 0', borderRadius: 12, border: 'none',
-            background: activeTab === t ? 'linear-gradient(135deg, var(--accent), var(--cyan))' : 'transparent',
-            color: activeTab === t ? '#04120e' : 'var(--muted)',
+            background: activeTab === t ? 'linear-gradient(135deg, var(--accent), var(--accent-2))' : 'transparent',
+            color: activeTab === t ? 'var(--ink)' : 'var(--muted)',
             fontWeight: 800, fontSize: 12, cursor: 'pointer', textTransform: 'capitalize',
-            boxShadow: activeTab === t ? '0 0 16px rgba(0,245,196,0.35)' : 'none',
+            boxShadow: activeTab === t ? '0 0 16px rgba(255,107,61,0.35)' : 'none',
             transition: 'all 0.25s',
           }}>{t === 'recup' ? 'récup' : t}</button>
         ))}

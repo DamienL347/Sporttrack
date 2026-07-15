@@ -168,12 +168,12 @@ export default function NutritionPage() {
   if (!authed) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', height: '100dvh', display: 'flex', flexDirection: 'column', padding: '20px 16px 12px' }}>
+    <main style={{ maxWidth: 480, margin: '0 auto', height: '100dvh', display: 'flex', flexDirection: 'column', padding: '20px 16px calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 10px)' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
         <Link href="/" style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: 20 }}>←</Link>
         <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: 'var(--accent)', margin: 0 }}>🥗 Coach Nutrition</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--accent)', margin: 0 }}>Coach Nutrition</h1>
           <div style={{ fontSize: 11, color: 'var(--muted)' }}>Photo du frigo ou liste d’aliments → repas sur mesure</div>
         </div>
         {messages.length > 0 && (
@@ -202,8 +202,8 @@ export default function NutritionPage() {
           <div key={i} className="pop-in" style={{
             alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
             maxWidth: '88%',
-            background: m.role === 'user' ? 'linear-gradient(135deg, var(--accent), var(--cyan))' : 'rgba(255,255,255,0.05)',
-            color: m.role === 'user' ? '#05060c' : 'var(--text)',
+            background: m.role === 'user' ? 'linear-gradient(135deg, var(--accent), var(--accent-2))' : 'rgba(255,255,255,0.05)',
+            color: m.role === 'user' ? 'var(--ink)' : 'var(--text)',
             border: m.role === 'user' ? 'none' : '1px solid var(--card-border)',
             backdropFilter: m.role === 'user' ? 'none' : 'blur(14px)',
             WebkitBackdropFilter: m.role === 'user' ? 'none' : 'blur(14px)',
@@ -234,7 +234,7 @@ export default function NutritionPage() {
             <input type="file" accept="image/*" style={{ display: 'none' }} disabled={!dataReady || streaming} onChange={(e) => e.target.files?.[0] && handlePhoto(e.target.files[0])} />
           </label>
           <input value={input} onChange={(e) => setInput(e.target.value)} placeholder={dataReady ? 'Cite tes aliments…' : 'Chargement…'} disabled={!dataReady || streaming} style={{ flex: 1, fontSize: 15 }} />
-          <button type="submit" disabled={!dataReady || streaming || (!input.trim() && !img)} className="press" style={{ flexShrink: 0, padding: '0 16px', height: 44, background: 'linear-gradient(135deg, var(--accent), var(--cyan))', color: '#05060c', fontWeight: 800, fontSize: 18, border: 'none', borderRadius: 12, cursor: 'pointer', opacity: !dataReady || streaming || (!input.trim() && !img) ? 0.5 : 1 }}>{streaming ? '…' : '↑'}</button>
+          <button type="submit" disabled={!dataReady || streaming || (!input.trim() && !img)} className="press" style={{ flexShrink: 0, padding: '0 16px', height: 44, background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', color: 'var(--ink)', fontWeight: 800, fontSize: 18, border: 'none', borderRadius: 12, cursor: 'pointer', opacity: !dataReady || streaming || (!input.trim() && !img) ? 0.5 : 1 }}>{streaming ? '…' : '↑'}</button>
         </form>
       </div>
     </main>

@@ -42,9 +42,9 @@ export default function LoginPage() {
 
   return (
     <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
-      <div className="animate-in" style={{ textAlign: 'center', marginBottom: 28 }}>
-        <div style={{ fontSize: 44, marginBottom: 8, animation: 'floaty 4s ease-in-out infinite' }}>⚡</div>
-        <h1 className="gradient-text" style={{ fontSize: 28, fontWeight: 900, letterSpacing: '-1px', margin: 0 }}>Sport Tracker</h1>
+      <div className="animate-in" style={{ textAlign: 'center', marginBottom: 28, width: '100%', maxWidth: 360 }}>
+        <h1 className="gradient-text" style={{ fontSize: 46, fontWeight: 800, margin: 0, lineHeight: 1 }}>Sport Tracker</h1>
+        <div className="service-line" style={{ marginTop: 18 }} />
       </div>
 
       <div className="glass animate-in" style={{ width: '100%', maxWidth: 360, padding: 22, animationDelay: '0.08s' }}>
@@ -52,8 +52,8 @@ export default function LoginPage() {
           {(['in', 'up'] as const).map(m => (
             <button key={m} className="press" onClick={() => { setMode(m); setErr(null); setMsg(null) }} style={{
               flex: 1, padding: '9px 0', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 13,
-              background: mode === m ? 'linear-gradient(135deg, var(--accent), var(--cyan))' : 'transparent',
-              color: mode === m ? '#05060c' : 'var(--muted)', transition: 'all 0.2s',
+              background: mode === m ? 'linear-gradient(135deg, var(--accent), var(--accent-2))' : 'transparent',
+              color: mode === m ? 'var(--ink)' : 'var(--muted)', transition: 'all 0.2s',
             }}>{m === 'in' ? 'Connexion' : 'Inscription'}</button>
           ))}
         </div>
@@ -69,9 +69,9 @@ export default function LoginPage() {
           </div>
 
           {err && <div style={{ background: 'rgba(255,77,109,0.12)', border: '1px solid var(--danger)', color: 'var(--danger)', borderRadius: 10, padding: '9px 12px', fontSize: 13, marginBottom: 12 }}>⚠️ {err}</div>}
-          {msg && <div style={{ background: 'rgba(0,245,196,0.10)', border: '1px solid var(--accent)', color: 'var(--accent)', borderRadius: 10, padding: '9px 12px', fontSize: 13, marginBottom: 12 }}>✅ {msg}</div>}
+          {msg && <div style={{ background: 'rgba(255,107,61,0.10)', border: '1px solid var(--accent)', color: 'var(--accent)', borderRadius: 10, padding: '9px 12px', fontSize: 13, marginBottom: 12 }}>✅ {msg}</div>}
 
-          <button type="submit" disabled={busy} className="press glow-accent" style={{ width: '100%', padding: 15, background: 'linear-gradient(135deg, var(--accent), var(--cyan))', color: '#05060c', fontSize: 15, fontWeight: 800, border: 'none', borderRadius: 13, cursor: 'pointer', opacity: busy ? 0.7 : 1 }}>
+          <button type="submit" disabled={busy} className="press glow-accent" style={{ width: '100%', padding: 15, background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', color: 'var(--ink)', fontSize: 15, fontWeight: 800, border: 'none', borderRadius: 13, cursor: 'pointer', opacity: busy ? 0.7 : 1 }}>
             {busy ? '…' : mode === 'in' ? 'Se connecter →' : 'Créer mon compte →'}
           </button>
         </form>

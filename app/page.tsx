@@ -1,9 +1,9 @@
 import Link from 'next/link'
 
 const tiles = [
-  { href: '/log', icon: '➕', title: 'Logger', sub: 'Séance · repas · sommeil', primary: true },
+  { href: '/log', icon: '➕', title: 'Logger', sub: 'Séance · repas · sommeil · poids', primary: true },
   { href: '/dashboard', icon: '📈', title: 'Dashboard', sub: 'Récupération & tendances' },
-  { href: '/coach', icon: '🤖', title: 'Coach IA', sub: 'Conseils personnalisés' },
+  { href: '/coach', icon: '🎾', title: 'Coach IA', sub: 'Conseils sur tes données' },
   { href: '/nutrition', icon: '🥗', title: 'Coach Nutrition', sub: 'Repas depuis ton frigo' },
   { href: '/photos', icon: '📸', title: 'Progression', sub: 'Photos avant / après' },
 ]
@@ -11,26 +11,30 @@ const tiles = [
 export default function Home() {
   return (
     <main
+      className="page-pad"
       style={{
         minHeight: '100vh',
+        maxWidth: 480,
+        margin: '0 auto',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
         justifyContent: 'center',
-        padding: '24px 16px',
+        padding: '48px 20px',
       }}
     >
-      <div className="animate-in" style={{ textAlign: 'center', marginBottom: 44 }}>
-        <div style={{ fontSize: 52, marginBottom: 10, animation: 'floaty 4s ease-in-out infinite' }}>⚡</div>
-        <h1 className="gradient-text" style={{ fontSize: 34, fontWeight: 900, letterSpacing: '-1.5px', margin: 0 }}>
-          Sport Tracker
+      {/* Hero scoreboard */}
+      <div className="animate-in" style={{ marginBottom: 36 }}>
+        <h1 style={{ fontSize: 58, fontWeight: 800, lineHeight: 0.92, margin: 0 }}>
+          Sport<br />
+          <span className="gradient-text">Tracker</span>
         </h1>
-        <p style={{ color: 'var(--muted)', fontSize: 14, marginTop: 8, letterSpacing: 0 }}>
-          Performance · récupération · nutrition
+        <div className="service-line" style={{ margin: '20px 0 12px' }} />
+        <p style={{ color: 'var(--muted)', fontSize: 13.5, margin: 0, letterSpacing: 0 }}>
+          Tennis · Padel · Récupération · Nutrition
         </p>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 380 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
         {tiles.map((t, i) => (
           <Link
             key={t.href}
@@ -39,52 +43,43 @@ export default function Home() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 16,
-              padding: '18px 20px',
+              gap: 15,
+              padding: '16px 18px',
               textDecoration: 'none',
               color: 'var(--text)',
-              animationDelay: `${0.08 * (i + 1)}s`,
-              border: t.primary ? '1px solid rgba(0,245,196,0.4)' : undefined,
+              animationDelay: `${0.07 * (i + 1)}s`,
+              border: t.primary ? '1px solid rgba(255,107,61,0.45)' : undefined,
             }}
           >
             <div
               style={{
-                width: 46,
-                height: 46,
-                borderRadius: 13,
+                width: 44,
+                height: 44,
+                borderRadius: 12,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 22,
-                background: t.primary ? 'linear-gradient(135deg, var(--accent), var(--cyan))' : 'rgba(255,255,255,0.05)',
+                fontSize: 21,
+                background: t.primary
+                  ? 'linear-gradient(150deg, var(--accent), #e5522a)'
+                  : 'rgba(210,225,255,0.05)',
                 flexShrink: 0,
               }}
             >
               {t.icon}
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 800, fontSize: 16 }}>{t.title}</div>
+              <div
+                className="eyebrow"
+                style={{ fontSize: 16.5, fontWeight: 700, letterSpacing: '0.06em', color: t.primary ? 'var(--accent)' : 'var(--text)' }}
+              >
+                {t.title}
+              </div>
               <div style={{ color: 'var(--muted)', fontSize: 12.5, marginTop: 2 }}>{t.sub}</div>
             </div>
-            <span style={{ color: 'var(--muted)', fontSize: 20 }}>›</span>
+            <span style={{ color: t.primary ? 'var(--accent)' : 'var(--muted)', fontSize: 20 }}>›</span>
           </Link>
         ))}
-
-        <Link
-          href="/profil"
-          className="press animate-in"
-          style={{
-            textAlign: 'center',
-            color: 'var(--muted)',
-            textDecoration: 'none',
-            fontSize: 13.5,
-            fontWeight: 600,
-            padding: '10px',
-            animationDelay: '0.35s',
-          }}
-        >
-          ⚙️ Mon profil
-        </Link>
       </div>
     </main>
   )

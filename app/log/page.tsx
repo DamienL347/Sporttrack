@@ -19,7 +19,7 @@ const DOULEURS = ['Aucune', 'Jambes', 'Bras', 'Dos', 'Épaules', 'Genoux']
 
 function Chip({ label, active, onClick, danger }: { label: string; active: boolean; onClick: () => void; danger?: boolean }) {
   const activeColor = danger ? 'var(--danger)' : 'var(--accent)'
-  const activeBg = danger ? 'rgba(255,77,109,0.14)' : 'rgba(0,245,196,0.14)'
+  const activeBg = danger ? 'rgba(255,77,109,0.14)' : 'rgba(255,107,61,0.14)'
   return (
     <button className="press" onClick={onClick} style={{
       padding: '7px 13px', borderRadius: 999, fontSize: 13, fontWeight: 600,
@@ -27,7 +27,7 @@ function Chip({ label, active, onClick, danger }: { label: string; active: boole
       background: active ? activeBg : 'rgba(255,255,255,0.03)',
       color: active ? activeColor : 'var(--muted)',
       cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
-      boxShadow: active ? `0 0 12px ${danger ? 'rgba(255,77,109,0.25)' : 'rgba(0,245,196,0.25)'}` : 'none',
+      boxShadow: active ? `0 0 12px ${danger ? 'rgba(255,77,109,0.25)' : 'rgba(255,107,61,0.25)'}` : 'none',
       transition: 'all 0.2s'
     }}>{label}</button>
   )
@@ -316,10 +316,10 @@ export default function LogPage() {
   )
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px 60px' }}>
+    <main className="page-pad" style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px 60px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
         <Link href="/" style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: 20 }}>←</Link>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent)', margin: 0 }}>Logger</h1>
+        <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--accent)', margin: 0 }}>Logger</h1>
       </div>
 
       {/* Tabs */}
@@ -327,11 +327,11 @@ export default function LogPage() {
         {(['sport', 'nutrition', 'sommeil', 'poids'] as Tab[]).map(t => (
           <button key={t} className="press" onClick={() => setTab(t)} style={{
             flex: 1, padding: '10px 2px', borderRadius: 12, border: 'none',
-            background: tab === t ? 'linear-gradient(135deg, var(--accent), var(--cyan))' : 'transparent',
-            color: tab === t ? '#05060c' : 'var(--muted)',
+            background: tab === t ? 'linear-gradient(135deg, var(--accent), var(--accent-2))' : 'transparent',
+            color: tab === t ? 'var(--ink)' : 'var(--muted)',
             fontWeight: 800, fontSize: 12, cursor: 'pointer',
             textTransform: 'capitalize',
-            boxShadow: tab === t ? '0 0 16px rgba(0,245,196,0.35)' : 'none',
+            boxShadow: tab === t ? '0 0 16px rgba(255,107,61,0.35)' : 'none',
             transition: 'all 0.25s'
           }}>{t === 'sport' ? '🏃' : t === 'nutrition' ? '🥗' : t === 'sommeil' ? '😴' : '⚖️'} {t}</button>
         ))}
@@ -357,7 +357,7 @@ export default function LogPage() {
               <div style={s}><label style={label}>Durée</label><input type="text" placeholder="1:30:00" value={sport.duree} onChange={e => setSport(p => ({ ...p, duree: e.target.value }))} /></div>
               <div style={s}><label style={label}>Kcal totales</label><input type="number" placeholder="950" value={sport.kcal} onChange={e => setSport(p => ({ ...p, kcal: e.target.value }))} /></div>
             </div>
-            <div style={{ ...s, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#05060c', border: '1px solid var(--card-border)', borderRadius: 10, padding: '12px 14px' }}>
+            <div style={{ ...s, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-deep)', border: '1px solid var(--card-border)', borderRadius: 10, padding: '12px 14px' }}>
               <label style={{ ...label, margin: 0 }}>⌚ Sans montre — estimation IA</label>
               <div onClick={() => setSport(p => ({ ...p, sansMontre: !p.sansMontre }))}
                 style={{ width: 44, height: 24, borderRadius: 12, background: sport.sansMontre ? 'var(--accent)' : 'var(--card-border)', position: 'relative', cursor: 'pointer', transition: 'background 0.2s', flexShrink: 0 }}>
@@ -366,16 +366,16 @@ export default function LogPage() {
             </div>
             {sport.sansMontre ? (
               <>
-                <button onClick={estimateSport} disabled={aiEstimating || !sport.duree.trim()} style={{ width: '100%', padding: '13px', background: 'rgba(0,245,196,0.10)', border: '1.5px solid var(--accent)', color: 'var(--accent)', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer', marginBottom: 14, opacity: aiEstimating || !sport.duree.trim() ? 0.6 : 1 }}>
+                <button onClick={estimateSport} disabled={aiEstimating || !sport.duree.trim()} style={{ width: '100%', padding: '13px', background: 'rgba(255,107,61,0.10)', border: '1.5px solid var(--accent)', color: 'var(--accent)', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer', marginBottom: 14, opacity: aiEstimating || !sport.duree.trim() ? 0.6 : 1 }}>
                   {aiEstimating ? '🤖 Estimation en cours…' : '🤖 Estimer avec l’IA'}
                 </button>
                 {sport.aiReco && (
-                  <div style={{ background: '#05060c', border: '1px solid var(--card-border)', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: 'var(--text)', marginBottom: 14, lineHeight: 1.5 }}>
+                  <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--card-border)', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: 'var(--text)', marginBottom: 14, lineHeight: 1.5 }}>
                     💬 {sport.aiReco}
                     {sport.aiConfiance && <span style={{ color: 'var(--muted)', fontSize: 11 }}> · confiance {sport.aiConfiance}</span>}
                   </div>
                 )}
-                {sport.fc && <div style={{ background: '#05060c', border: '1px solid var(--card-border)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: 'var(--accent)', marginBottom: 14 }}>
+                {sport.fc && <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--card-border)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: 'var(--accent)', marginBottom: 14 }}>
                   FC estimée : {sport.fc} BPM · Zone : {getZonePerso(Number(sport.fc), profile)}
                 </div>}
               </>
@@ -385,7 +385,7 @@ export default function LogPage() {
                   <div style={s}><label style={label}>FC moy (BPM)</label><input type="number" placeholder="130" value={sport.fc} onChange={e => setSport(p => ({ ...p, fc: e.target.value }))} /></div>
                   <div style={s}><label style={label}>FC max (BPM)</label><input type="number" placeholder="165" value={sport.fcmax} onChange={e => setSport(p => ({ ...p, fcmax: e.target.value }))} /></div>
                 </div>
-                {sport.fc && <div style={{ background: '#05060c', border: '1px solid var(--card-border)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: 'var(--accent)', marginTop: -4 }}>
+                {sport.fc && <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--card-border)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: 'var(--accent)', marginTop: -4 }}>
                   Zone : {getZonePerso(Number(sport.fc), profile)}{!profile?.fc_max && !profile?.age ? ' (zones génériques — renseigne ton profil)' : ''}
                 </div>}
               </>
@@ -435,17 +435,17 @@ export default function LogPage() {
             ) : (
               <div style={{ position: 'relative' }}>
                 <img src={nutriImg.preview} alt="repas" style={{ width: '100%', borderRadius: 10, maxHeight: 220, objectFit: 'cover', display: 'block' }} />
-                <button onClick={() => { setNutriImg(null); setEstimated(false) }} style={{ position: 'absolute', top: 8, right: 8, background: '#05060c', color: 'var(--danger)', border: '1px solid var(--danger)', borderRadius: 8, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}>✕ Retirer</button>
+                <button onClick={() => { setNutriImg(null); setEstimated(false) }} style={{ position: 'absolute', top: 8, right: 8, background: 'var(--bg-deep)', color: 'var(--danger)', border: '1px solid var(--danger)', borderRadius: 8, padding: '4px 10px', fontSize: 12, cursor: 'pointer' }}>✕ Retirer</button>
               </div>
             )}
           </div>
 
-          <button onClick={estimateNutri} disabled={estimating} style={{ width: '100%', padding: '13px', background: 'rgba(0,245,196,0.10)', border: '1.5px solid var(--accent)', color: 'var(--accent)', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer', marginBottom: 14, opacity: estimating ? 0.6 : 1 }}>
+          <button onClick={estimateNutri} disabled={estimating} style={{ width: '100%', padding: '13px', background: 'rgba(255,107,61,0.10)', border: '1.5px solid var(--accent)', color: 'var(--accent)', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer', marginBottom: 14, opacity: estimating ? 0.6 : 1 }}>
             {estimating ? '🤖 Estimation en cours…' : '🤖 Estimer les valeurs avec l’IA'}
           </button>
 
           {nutri.commentaire && (
-            <div style={{ background: '#05060c', border: '1px solid var(--card-border)', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: 'var(--text)', marginBottom: 14, lineHeight: 1.5 }}>
+            <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--card-border)', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: 'var(--text)', marginBottom: 14, lineHeight: 1.5 }}>
               💬 {nutri.commentaire}
               {nutri.confiance && <span style={{ color: 'var(--muted)', fontSize: 11 }}> · confiance {nutri.confiance}</span>}
             </div>
@@ -475,7 +475,7 @@ export default function LogPage() {
               <div style={s}><label style={label}>Coucher</label><input type="time" value={sleep.coucher} onChange={e => setSleep(p => ({ ...p, coucher: e.target.value }))} /></div>
               <div style={s}><label style={label}>Lever</label><input type="time" value={sleep.lever} onChange={e => setSleep(p => ({ ...p, lever: e.target.value }))} /></div>
             </div>
-            {calcSommeil() && <div style={{ background: '#05060c', border: '1px solid var(--card-border)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: (calcSommeil() || 0) >= 7.5 ? 'var(--accent)' : 'var(--danger)', marginBottom: 14 }}>
+            {calcSommeil() && <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--card-border)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: (calcSommeil() || 0) >= 7.5 ? 'var(--accent)' : 'var(--danger)', marginBottom: 14 }}>
               Durée : {calcSommeil()}h {(calcSommeil() || 0) >= 7.5 ? '✅' : '⚠️ Insuffisant'}
             </div>}
             <Slider label="Qualité du sommeil" value={sleep.qualite} onChange={v => setSleep(p => ({ ...p, qualite: v }))} />
@@ -489,11 +489,11 @@ export default function LogPage() {
           <div style={card}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
               <div style={{ ...sectionTitle, marginBottom: 0 }}>😴 Siestes</div>
-              <button className="press" onClick={addNap} style={{ background: 'rgba(0,245,196,0.10)', border: '1px solid var(--accent)', color: 'var(--accent)', borderRadius: 8, padding: '5px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>+ Ajouter</button>
+              <button className="press" onClick={addNap} style={{ background: 'rgba(255,107,61,0.10)', border: '1px solid var(--accent)', color: 'var(--accent)', borderRadius: 8, padding: '5px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>+ Ajouter</button>
             </div>
             {naps.length === 0 && <p style={{ color: 'var(--muted)', fontSize: 13, textAlign: 'center', padding: '12px 0' }}>Aucune sieste</p>}
             {naps.map((nap, i) => (
-              <div key={i} style={{ background: '#05060c', border: '1px solid var(--card-border)', borderRadius: 10, padding: 12, marginBottom: 10 }}>
+              <div key={i} style={{ background: 'var(--bg-deep)', border: '1px solid var(--card-border)', borderRadius: 10, padding: 12, marginBottom: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
                   <span style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}>Sieste {i + 1}</span>
                   <button onClick={() => removeNap(i)} style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16 }}>✕</button>
@@ -541,7 +541,7 @@ export default function LogPage() {
       <button
         onClick={tab === 'sport' ? saveSport : tab === 'nutrition' ? saveNutri : tab === 'sommeil' ? saveSleep : savePoids}
         disabled={saving}
-        style={{ width: '100%', padding: 16, background: saved ? '#27ae60' : 'var(--accent)', color: '#05060c', fontSize: 16, fontWeight: 700, border: 'none', borderRadius: 14, cursor: 'pointer', opacity: saving ? 0.7 : 1, transition: 'all 0.2s' }}
+        style={{ width: '100%', padding: 16, background: saved ? 'var(--ok)' : 'var(--accent)', color: 'var(--ink)', fontSize: 16, fontWeight: 700, border: 'none', borderRadius: 14, cursor: 'pointer', opacity: saving ? 0.7 : 1, transition: 'all 0.2s' }}
       >
         {saving ? 'Enregistrement...' : saved ? '✓ Enregistré !' : 'Enregistrer →'}
       </button>

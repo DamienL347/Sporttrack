@@ -123,19 +123,19 @@ export function computeACWR(sessions: Session[], today: string): ACWR {
     if (ratio < 0.8) {
       zone = 'detraining'
       label = 'Sous-charge — désentraînement'
-      color = '#3498db'
+      color = '#6fb1ff'
     } else if (ratio <= 1.3) {
       zone = 'optimal'
       label = 'Zone optimale ✅'
-      color = '#27ae60'
+      color = '#2ed573'
     } else if (ratio <= 1.5) {
       zone = 'caution'
       label = 'Charge élevée — prudence'
-      color = '#f39c12'
+      color = '#ffb020'
     } else {
       zone = 'danger'
       label = 'Pic de charge ⚠️ risque'
-      color = '#e74c3c'
+      color = '#ff4d6d'
     }
   }
   return { acute, chronicWeekly, ratio, zone, label, color }
@@ -355,16 +355,16 @@ export function computeRecovery(
   const score = Math.round(clamp(weighted - painPenalty))
 
   let verdict = 'Repos conseillé'
-  let color = '#e74c3c'
+  let color = '#ff4d6d'
   if (score >= 80) {
     verdict = 'Prêt à performer'
-    color = '#27ae60'
+    color = '#2ed573'
   } else if (score >= 65) {
     verdict = 'Bonne forme'
-    color = '#00d4aa'
+    color = '#3ec9a7'
   } else if (score >= 50) {
     verdict = 'Prudence'
-    color = '#f39c12'
+    color = '#ffb020'
   }
 
   const message = buildMessage(score, acwr, sleepStats, cadence, painPenalty > 0)

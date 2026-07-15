@@ -68,10 +68,10 @@ export default function PhotosPage() {
   if (!authed || loading) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px 60px' }}>
+    <main className="page-pad" style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px 60px' }}>
       <div className="animate-in" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22 }}>
         <Link href="/" style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: 22 }}>←</Link>
-        <h1 style={{ fontSize: 22, fontWeight: 900, margin: 0, letterSpacing: '-0.5px' }}>📸 Progression</h1>
+        <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0 }}>📸 Progression</h1>
       </div>
 
       {err && <div style={{ background: 'rgba(255,77,109,0.12)', border: '1px solid var(--danger)', color: 'var(--danger)', borderRadius: 10, padding: '10px 12px', fontSize: 13, marginBottom: 14, wordBreak: 'break-word' }}>⚠️ {err} — as-tu exécuté la migration <b>migration_photos.sql</b> ?</div>}
@@ -92,7 +92,7 @@ export default function PhotosPage() {
 
       {/* Actions */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
-        <label className="glass press glow-accent" style={{ textAlign: 'center', padding: '14px 10px', cursor: 'pointer', border: '1px solid rgba(0,245,196,0.4)', opacity: busy ? 0.6 : 1 }}>
+        <label className="glass press glow-accent" style={{ textAlign: 'center', padding: '14px 10px', cursor: 'pointer', border: '1px solid rgba(255,107,61,0.4)', opacity: busy ? 0.6 : 1 }}>
           <div style={{ fontSize: 22 }}>📷</div>
           <div style={{ fontWeight: 800, fontSize: 13, marginTop: 4, color: 'var(--accent)' }}>Photo du jour</div>
           <input type="file" accept="image/*" capture="user" style={{ display: 'none' }} disabled={busy} onChange={(e) => e.target.files?.[0] && upload(e.target.files[0], 'progress')} />

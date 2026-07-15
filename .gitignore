@@ -19,3 +19,8 @@ next-env.d.ts
 # Logs & divers
 *.log
 .DS_Store
+
+# Skills agents (outillage local)
+/.agents/
+/.claude/
+skills-lock.json

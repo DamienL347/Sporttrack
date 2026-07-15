@@ -156,7 +156,7 @@ export default function CoachPage() {
         height: '100dvh',
         display: 'flex',
         flexDirection: 'column',
-        padding: '20px 16px 12px',
+        padding: '20px 16px calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 10px)',
       }}
     >
       {/* Header */}
@@ -165,7 +165,7 @@ export default function CoachPage() {
           ←
         </Link>
         <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)', margin: 0 }}>🤖 Coach IA</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--accent)', margin: 0 }}>Coach IA</h1>
           {recovery && recovery.score != null && (
             <div style={{ fontSize: 11, color: 'var(--muted)' }}>
               Récup {recovery.score}/100 · {recovery.verdict}
@@ -207,7 +207,7 @@ export default function CoachPage() {
                     padding: '8px 12px',
                     borderRadius: 20,
                     border: '1.5px solid var(--card-border)',
-                    background: '#05060c',
+                    background: 'var(--bg-deep)',
                     color: 'var(--accent)',
                     fontSize: 12.5,
                     cursor: dataReady ? 'pointer' : 'default',
@@ -228,8 +228,8 @@ export default function CoachPage() {
             style={{
               alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
               maxWidth: '88%',
-              background: m.role === 'user' ? 'linear-gradient(135deg, var(--accent), var(--cyan))' : 'rgba(255,255,255,0.05)',
-              color: m.role === 'user' ? '#05060c' : 'var(--text)',
+              background: m.role === 'user' ? 'linear-gradient(135deg, var(--accent), var(--accent-2))' : 'rgba(255,255,255,0.05)',
+              color: m.role === 'user' ? 'var(--ink)' : 'var(--text)',
               border: m.role === 'user' ? 'none' : '1px solid var(--card-border)',
               backdropFilter: m.role === 'user' ? 'none' : 'blur(14px)',
               WebkitBackdropFilter: m.role === 'user' ? 'none' : 'blur(14px)',
@@ -270,7 +270,7 @@ export default function CoachPage() {
           style={{
             padding: '0 18px',
             background: 'var(--accent)',
-            color: '#05060c',
+            color: 'var(--ink)',
             fontWeight: 700,
             fontSize: 15,
             border: 'none',

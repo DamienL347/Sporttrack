@@ -1,0 +1,17 @@
+{
+  "name": "Sport Tracker",
+  "short_name": "Sport Tracker",
+  "description": "Suivi sport, nutrition & sommeil",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a101f",
+  "theme_color": "#0a101f",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -152,8 +152,8 @@ export default function RecoveryPanel({ sessions, sleep }: { sessions: Session[]
                   style={{
                     height: barsIn ? h : 3,
                     borderRadius: 4,
-                    background: d.load > 0 ? (isToday ? 'linear-gradient(180deg, var(--accent), var(--cyan))' : 'linear-gradient(180deg, rgba(0,245,196,0.85), rgba(0,245,196,0.35))') : 'rgba(255,255,255,0.08)',
-                    boxShadow: d.load > 0 && isToday ? '0 0 10px rgba(0,245,196,0.5)' : 'none',
+                    background: d.load > 0 ? (isToday ? 'linear-gradient(180deg, var(--accent), var(--accent-2))' : 'linear-gradient(180deg, rgba(255,107,61,0.85), rgba(255,107,61,0.35))') : 'rgba(255,255,255,0.08)',
+                    boxShadow: d.load > 0 && isToday ? '0 0 10px rgba(255,107,61,0.5)' : 'none',
                     transition: `height 0.7s cubic-bezier(0.2,0.7,0.3,1) ${i * 0.03}s`,
                   }}
                 />

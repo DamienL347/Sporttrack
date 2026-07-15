@@ -81,10 +81,10 @@ export function getZone(fc: number | null): string {
 }
 
 export function getZoneColor(zone: string): string {
-  if (zone.includes('Zone 1')) return '#3498db'
-  if (zone.includes('Zone 2')) return '#27ae60'
-  if (zone.includes('Zone 3')) return '#f39c12'
-  if (zone.includes('Zone 4')) return '#e74c3c'
+  if (zone.includes('Zone 1')) return '#6fb1ff'
+  if (zone.includes('Zone 2')) return '#2ed573'
+  if (zone.includes('Zone 3')) return '#ffb020'
+  if (zone.includes('Zone 4')) return '#ff4d6d'
   return '#6b7280'
 }
 

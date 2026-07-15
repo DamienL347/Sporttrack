@@ -47,11 +47,11 @@ export default function ProfilPage() {
   )
 
   return (
-    <main style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px 60px' }}>
+    <main className="page-pad" style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px 60px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Link href="/" style={{ color: 'var(--muted)', textDecoration: 'none', fontSize: 20 }}>←</Link>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent)', margin: 0 }}>Mon profil</h1>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--accent)', margin: 0 }}>Mon profil</h1>
         </div>
         <button className="press" onClick={async () => { await signOut(); router.replace('/login') }} style={{ background: 'transparent', border: '1px solid var(--card-border)', color: 'var(--muted)', borderRadius: 10, padding: '7px 12px', fontSize: 12.5, fontWeight: 600, cursor: 'pointer' }}>Se déconnecter</button>
       </div>
@@ -79,7 +79,7 @@ export default function ProfilPage() {
           <div style={field}><label style={label}>FC max (BPM)</label><input type="number" value={p.fc_max ?? ''} onChange={(e) => set('fc_max', num(e.target.value))} placeholder="190" /></div>
           <div style={field}><label style={label}>FC repos (BPM)</label><input type="number" value={p.fc_repos ?? ''} onChange={(e) => set('fc_repos', num(e.target.value))} placeholder="55" /></div>
         </div>
-        <div style={{ background: '#05060c', border: '1px solid var(--card-border)', borderRadius: 8, padding: '10px 12px', fontSize: 12.5, color: zb ? 'var(--accent)' : 'var(--muted)', lineHeight: 1.6 }}>
+        <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--card-border)', borderRadius: 8, padding: '10px 12px', fontSize: 12.5, color: zb ? 'var(--accent)' : 'var(--muted)', lineHeight: 1.6 }}>
           {zb
             ? <>Zones perso (Karvonen) · FC max {hrMax(p)}<br />Z1 &lt;{zb.z2} · Z2 {zb.z2}-{zb.z3} · Z3 {zb.z3}-{zb.z4} · Z4 &gt;{zb.z4} BPM</>
             : 'Renseigne FC max (ou ton âge) pour des zones cardiaques personnalisées.'}
@@ -97,7 +97,7 @@ export default function ProfilPage() {
         <div style={field}><label style={label}>Préférences / restrictions alimentaires</label><textarea value={p.preferences_alim || ''} onChange={(e) => set('preferences_alim', e.target.value)} placeholder="Peu de lactose, pas de porc, végétarien le midi…" style={{ resize: 'none', height: 50 }} /></div>
         <div style={field}><label style={label}>Notes pour le coach (mémoire)</label><textarea value={p.notes_coach || ''} onChange={(e) => set('notes_coach', e.target.value)} placeholder="Ce que le coach doit toujours garder en tête sur toi…" style={{ resize: 'none', height: 60 }} /></div>
         {targets.kcal && (
-          <div style={{ background: '#05060c', border: '1px solid var(--card-border)', borderRadius: 8, padding: '10px 12px', fontSize: 12.5, color: 'var(--text)' }}>
+          <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--card-border)', borderRadius: 8, padding: '10px 12px', fontSize: 12.5, color: 'var(--text)' }}>
             🎯 Cibles estimées : <strong style={{ color: 'var(--accent)' }}>{targets.kcal} kcal/j</strong> · <strong style={{ color: 'var(--accent)' }}>{targets.proteines} g protéines/j</strong>
           </div>
         )}
@@ -105,7 +105,7 @@ export default function ProfilPage() {
 
       {err && <div style={{ background: 'rgba(255,77,109,0.12)', border: '1px solid var(--danger)', color: 'var(--danger)', borderRadius: 10, padding: '10px 12px', fontSize: 13, marginBottom: 12 }}>⚠️ {err} — as-tu exécuté la migration SQL (supabase/migration_profil_rpe.sql) ?</div>}
 
-      <button onClick={submit} disabled={saving} style={{ width: '100%', padding: 16, background: saved ? '#27ae60' : 'var(--accent)', color: '#05060c', fontSize: 16, fontWeight: 700, border: 'none', borderRadius: 14, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
+      <button onClick={submit} disabled={saving} style={{ width: '100%', padding: 16, background: saved ? 'var(--ok)' : 'var(--accent)', color: 'var(--ink)', fontSize: 16, fontWeight: 700, border: 'none', borderRadius: 14, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
         {saving ? 'Enregistrement…' : saved ? '✓ Profil enregistré !' : 'Enregistrer mon profil →'}
       </button>
     </main>
